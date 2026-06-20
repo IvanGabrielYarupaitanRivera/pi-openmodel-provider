@@ -14,9 +14,10 @@ pi install npm:pi-openmodel-provider
 
 | Step | What to do |
 |------|------------|
-| 1️⃣ | `/login` → "Use a subscription" → **OpenModel** → "Paste API key manually" → paste your key |
-| 2️⃣ | `/reload` (so models appear) |
-| 3️⃣ | `Ctrl + L` or `/model openmodel/deepseek-v4-flash` to select your model |
+| 1️⃣ | `/reload` (so OpenModel appears in /login) |
+| 2️⃣ | `/login` → "Use a subscription" → **OpenModel** → "Paste API key manually" → paste your key |
+| 3️⃣ | `/reload` (so models load) |
+| 4️⃣ | `Ctrl + L` or `/model openmodel/deepseek-v4-flash` to select your model |
 
 Done! You can now use OpenModel in pi.
 
