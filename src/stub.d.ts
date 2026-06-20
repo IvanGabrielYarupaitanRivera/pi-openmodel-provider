@@ -5,24 +5,24 @@
 
 declare module "@earendil-works/pi-coding-agent" {
   export interface ExtensionAPI {
-    registerProvider(name: string, config: any): void
-    registerCommand(name: string, options: any): void
+    registerProvider(name: string, config: any): void;
+    registerCommand(name: string, options: any): void;
   }
 
   export interface ProviderModelConfig {
-    id: string
-    name: string
-    reasoning: boolean
-    input: readonly ["text" | "image"]
+    id: string;
+    name: string;
+    reasoning: boolean;
+    input: readonly ["text" | "image"];
     cost: {
-      input: number
-      output: number
-      cacheRead: number
-      cacheWrite: number
-    }
-    contextWindow: number
-    maxTokens: number
-    api?: string
-    headers?: Record<string, string>
+      input: number;
+      output: number;
+      cacheRead: number;
+      cacheWrite: number;
+    };
+    contextWindow: number;
+    maxTokens: number;
+    api?: string;
+    headers?: Record<string, string>;
   }
 }
