@@ -2,9 +2,9 @@
 
 ## Prerelease Checklist
 
-- [ ] Update version in `package.json` (e.g. `0.2.0`)
+- [ ] Update version in `package.json` (e.g. `0.2.3`)
 - [ ] Update `CHANGELOG.md` with new version and changes
-- [ ] Update README.md if there are breaking changes or new features
+- [ ] Update `AGENTS.md` and SKILL.md if new features added
 - [ ] Run type checking: `npm run typecheck`
 - [ ] Run tests: `npm run test:models`
 - [ ] Create and merge PR for review
