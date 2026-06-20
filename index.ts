@@ -3,12 +3,14 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readFileSync } from "node:fs";
+import { promises as fs } from "node:fs";
+import { homedir } from "node:os";
 
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 import { fetchOpenModelModels } from "./src/models.js";
 
 export default function (pi: ExtensionAPI) {
+  // Register OpenModel provider with OAuth
   pi.registerProvider("openmodel", {
     name: "OpenModel",
     baseUrl: "https://api.openmodel.ai",
@@ -22,16 +24,17 @@ export default function (pi: ExtensionAPI) {
   });
 }
 
-// Load models when API key exists
-pi.on("session_start", async (_event, ctx) => {
+// Load models when API key exists (before_agent_start)
+pi.on("before_agent_start", async (_event: unknown, ctx: any) => {
   try {
-    // Check if API key exists in auth.json
-    let apiKey: string | undefined = undefined;
+    // Read API key from auth.json
+    let apiKey: string | null = null;
     try {
-      const auth = readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
-      const authData = JSON.parse(auth);
+      const authPath = `${homedir()}/.pi/agent/auth.json`;
+      const fileContent = await fs.readFile(authPath, "utf-8");
+      const authData = JSON.parse(fileContent);
       apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
-    } catch (e) {
+    } catch (error) {
       // Not found
     }
 
