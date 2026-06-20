@@ -37,6 +37,9 @@
   "pi": {
     "extensions": [
       "./index.ts"
+    ],
+    "skills": [
+      "./.agents/skills"
     ]
   },
   "peerDependencies": {
