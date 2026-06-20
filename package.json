@@ -13,9 +13,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/user/pi-openmodel-provider.git"
+    "url": "git+https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider.git"
   },
-  "homepage": "https://github.com/user/pi-openmodel-provider#readme",
+  "homepage": "https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider#readme",
   "files": [
     "index.ts",
     "src/",
