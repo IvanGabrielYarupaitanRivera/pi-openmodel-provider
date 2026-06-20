@@ -18,64 +18,40 @@ Then reload pi:
 /reload
 ```
 
-## Setup
+## Quick start
 
-Set your OpenModel API key using one of these methods:
+1. **Login**
+   ```txt
+   /login
+   ```
+   → Select **"Use a subscription"**
+   → Select **OpenModel** from the provider list
+   → Select **"Paste API key manually"**
+   → Go to [console.openmodel.ai](https://console.openmodel.ai), create an API key and paste it
 
-### 1. Login in pi (recommended)
+2. **Reload** (so models appear)
+   ```txt
+   /reload
+   ```
 
-In pi, run:
-
-```txt
-/login
-```
-
-Then:
-1. Select **"Use a subscription"**
-2. Select **OpenModel** from the provider list
-3. Select **"Paste API key manually"**
-4. Go to [console.openmodel.ai](https://console.openmodel.ai)
-5. In the sidebar, click **API Keys**
-6. Click **Create API Key**, give it a name, and copy the generated key
-7. Paste the key in pi
-
-The key starts with `om-` and is automatically stored in pi's auth file.
-
-### 2. Auth file
-
-Create `~/.pi/agent/auth.json`:
-
-```json
-{
-  "openmodel": "om-..."
-}
-```
-
-### 3. Environment variable
-
-```sh
-export OPENMODEL_API_KEY="om-..."
-```
+3. **Select model** (press `Ctrl + L` or `/model`)
+   ```txt
+   /model openmodel/deepseek-v4-flash
+   ```
 
 ## Usage
 
-After installing and setting your API key:
+After setup, select any OpenModel model:
 
 ```txt
 /model openmodel/deepseek-v4-flash
 ```
 
-Any query will then use the OpenModel API. You can list available models:
-
-```sh
-pi --list-models
-```
+Press **Ctrl + L** to open the model selector and browse available models.
 
 ## Models
 
 Models are fetched live from OpenModel's API at startup, so new models show up without a package release.
-
-If you don't see any models after setup, run `/reload` to fetch them.
 
 ### Supported Providers
 
@@ -98,8 +74,6 @@ On startup, the provider fetches:
 ```txt
 https://api.openmodel.ai/v1/models
 ```
-
-For tests or local mocks, override it with `OPENMODEL_MODELS_URL`.
 
 ## Pricing
 
