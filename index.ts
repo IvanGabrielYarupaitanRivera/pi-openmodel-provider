@@ -19,59 +19,61 @@
 import type {
   ExtensionAPI,
   ProviderModelConfig,
-} from "@earendil-works/pi-coding-agent"
+} from "@earendil-works/pi-coding-agent";
 
-import { fetchOpenModelModels } from "./src/models.ts"
+import { fetchOpenModelModels } from "./src/models.js";
 import {
   fetchModelStabilitySummary,
   fetchModelStabilityDetail,
   formatHealthStatus,
   formatConfidence,
   type HealthStatus,
-} from "./src/stability.ts"
-import { login, refreshToken, getApiKey } from "./src/auth.ts"
+} from "./src/stability.js";
+import { login, refreshToken, getApiKey } from "./src/auth.js";
 
 export default async function (pi: ExtensionAPI) {
-  const apiKey = "$OPENMODEL_API_KEY"
+  const apiKey = "$OPENMODEL_API_KEY";
 
   // Fetch models and stability data in parallel
   const [models, stabilityMap] = await Promise.all([
-    fetchOpenModelModels({ apiKey: undefined }),
-    fetchModelStabilitySummary().catch(() => [] as Array<{ model_name: string; health_status: HealthStatus }>),
-  ])
+    fetchOpenModelModels(),
+    fetchModelStabilitySummary().catch(
+      () => [] as Array<{ model_name: string; health_status: HealthStatus }>,
+    ),
+  ]);
 
   // Build stability lookup for model name enrichment
   const stabilityByModel = new Map(
     stabilityMap.map((s) => [s.model_name, s.health_status]),
-  )
+  );
 
   // Group models by API type with health status in names
-  const messagesModels: ProviderModelConfig[] = []
-  const responsesModels: ProviderModelConfig[] = []
-  const geminiModels: ProviderModelConfig[] = []
+  const messagesModels: ProviderModelConfig[] = [];
+  const responsesModels: ProviderModelConfig[] = [];
+  const geminiModels: ProviderModelConfig[] = [];
 
   for (const m of models) {
-    const health = stabilityByModel.get(m.id)
+    const health = stabilityByModel.get(m.id);
     const healthPrefix = health
       ? `${formatHealthStatus(health).split(" ")[0]} `
-      : ""
+      : "";
 
     const config: ProviderModelConfig = {
       id: m.id,
       name: `${healthPrefix}${m.id}`,
       reasoning: m.reasoning,
-      input: m.input,
+      input: m.input as any,
       cost: m.cost,
       contextWindow: m.contextWindow,
       maxTokens: m.maxTokens,
-    }
+    };
 
     if (m.api === "anthropic-messages") {
-      messagesModels.push(config)
+      messagesModels.push(config);
     } else if (m.api === "openai-responses") {
-      responsesModels.push(config)
+      responsesModels.push(config);
     } else if (m.api === "google-generative-ai") {
-      geminiModels.push(config)
+      geminiModels.push(config);
     }
   }
 
@@ -89,7 +91,7 @@ export default async function (pi: ExtensionAPI) {
         getApiKey,
       },
       models: messagesModels,
-    })
+    });
   }
 
   // Register Responses protocol provider (OpenAI models)
@@ -106,7 +108,7 @@ export default async function (pi: ExtensionAPI) {
         getApiKey,
       },
       models: responsesModels,
-    })
+    });
   }
 
   // Register Gemini protocol provider (Google models)
@@ -123,7 +125,7 @@ export default async function (pi: ExtensionAPI) {
         getApiKey,
       },
       models: geminiModels,
-    })
+    });
   }
 
   // -----------------------------------------------------------------------
@@ -131,11 +133,11 @@ export default async function (pi: ExtensionAPI) {
   // -----------------------------------------------------------------------
   pi.registerCommand("openmodel", {
     description: "Show OpenModel provider status and quick actions",
-    handler: async (_args, ctx) => {
-      const totalModels = models.length
-      const messagesCount = messagesModels.length
-      const responsesCount = responsesModels.length
-      const geminiCount = geminiModels.length
+    handler: async (_args: string, ctx: any) => {
+      const totalModels = models.length;
+      const messagesCount = messagesModels.length;
+      const responsesCount = responsesModels.length;
+      const geminiCount = geminiModels.length;
 
       const lines = [
         "╔══════════════════════════════════════╗",
@@ -150,23 +152,23 @@ export default async function (pi: ExtensionAPI) {
         "║  /login openmodel  - Set API key    ║",
         "║  /openmodel-stability - View health ║",
         "╚══════════════════════════════════════╝",
-      ]
+      ];
 
-      ctx.ui.notify(lines.join("\n"), "info")
+      ctx.ui.notify(lines.join("\n"), "info");
     },
-  })
+  });
 
   // -----------------------------------------------------------------------
   // /openmodel-stability - Model health dashboard
   // -----------------------------------------------------------------------
   pi.registerCommand("openmodel-stability", {
     description: "Show OpenModel model stability metrics",
-    handler: async (args, ctx) => {
+    handler: async (args: string | undefined, ctx: any) => {
       if (args?.trim()) {
         // Show detail for a specific model
-        const modelName = args.trim()
+        const modelName = args.trim();
         try {
-          const detail = await fetchModelStabilityDetail(modelName)
+          const detail = await fetchModelStabilityDetail(modelName);
           const lines = [
             `📊 ${detail.model_name}`,
             `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -179,36 +181,36 @@ export default async function (pi: ExtensionAPI) {
             `Updated:    ${new Date(detail.updated_at * 1000).toLocaleString()}`,
             ``,
             `📈 Hourly data (last 24h):`,
-          ]
+          ];
           for (const point of detail.series) {
-            const time = new Date(point.ts * 1000).toLocaleTimeString()
+            const time = new Date(point.ts * 1000).toLocaleTimeString();
             lines.push(
               `  ${time.padStart(8)}  ` +
-              `${point.success_rate.toFixed(1).padStart(5)}%  ` +
-              `${String(point.avg_latency_ms.toFixed(0)).padStart(5)}ms  ` +
-              `${point.avg_tps.toFixed(1).padStart(6)} t/s  ` +
-              `${point.confidence}`,
-            )
+                `${point.success_rate.toFixed(1).padStart(5)}%  ` +
+                `${String(point.avg_latency_ms.toFixed(0)).padStart(5)}ms  ` +
+                `${point.avg_tps.toFixed(1).padStart(6)} t/s  ` +
+                `${point.confidence}`,
+            );
           }
-          ctx.ui.notify(lines.join("\n"), "info")
+          ctx.ui.notify(lines.join("\n"), "info");
         } catch {
           ctx.ui.notify(
             `❌ Could not fetch stability for "${modelName}". Check the model name.`,
             "error",
-          )
+          );
         }
       } else {
         // Show summary for all models
         try {
-          const summary = await fetchModelStabilitySummary()
+          const summary = await fetchModelStabilitySummary();
           if (summary.length === 0) {
-            ctx.ui.notify("No stability data available.", "warning")
-            return
+            ctx.ui.notify("No stability data available.", "warning");
+            return;
           }
           const lines = [
             "📊 OpenModel Stability (24h)",
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-          ]
+          ];
           // Sort: operational first, then by success rate
           const statusOrder: Record<string, number> = {
             operational: 0,
@@ -216,29 +218,31 @@ export default async function (pi: ExtensionAPI) {
             degraded: 2,
             unstable: 3,
             no_data: 4,
-          }
+          };
           const sorted = [...summary].sort((a, b) => {
-            const ao = statusOrder[a.health_status] ?? 5
-            const bo = statusOrder[b.health_status] ?? 5
-            if (ao !== bo) return ao - bo
-            return b.success_rate - a.success_rate
-          })
+            const ao = statusOrder[a.health_status] ?? 5;
+            const bo = statusOrder[b.health_status] ?? 5;
+            if (ao !== bo) return ao - bo;
+            return b.success_rate - a.success_rate;
+          });
 
           for (const s of sorted) {
-            const healthEmoji = formatHealthStatus(s.health_status).split(" ")[0]
-            const paddedName = s.model_name.padEnd(28).slice(0, 28)
+            const healthEmoji = formatHealthStatus(s.health_status).split(
+              " ",
+            )[0];
+            const paddedName = s.model_name.padEnd(28).slice(0, 28);
             lines.push(
               `  ${healthEmoji} ${paddedName} ` +
-              `${s.success_rate.toFixed(1).padStart(5)}%  ` +
-              `${s.avg_latency_ms.toFixed(0).padStart(5)}ms  ` +
-              `${s.avg_tps.toFixed(1).padStart(6)} t/s`,
-            )
+                `${s.success_rate.toFixed(1).padStart(5)}%  ` +
+                `${s.avg_latency_ms.toFixed(0).padStart(5)}ms  ` +
+                `${s.avg_tps.toFixed(1).padStart(6)} t/s`,
+            );
           }
-          ctx.ui.notify(lines.join("\n"), "info")
+          ctx.ui.notify(lines.join("\n"), "info");
         } catch {
-          ctx.ui.notify("❌ Failed to fetch stability summary.", "error")
+          ctx.ui.notify("❌ Failed to fetch stability summary.", "error");
         }
       }
     },
-  })
+  });
 }

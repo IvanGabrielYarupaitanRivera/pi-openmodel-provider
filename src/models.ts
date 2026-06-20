@@ -281,19 +281,20 @@ export async function fetchOpenModelModels(options?: {
 }
 
 // Allow direct execution: `tsx src/models.ts`
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const key = process.env.OPENMODEL_API_KEY
-  const models = await fetchOpenModelModels({
-    apiKey: key ?? undefined,
-  })
-  for (const m of models) {
-    console.log(
-      `${m.id.padEnd(30)} ` +
-      `${m.api.padEnd(22)} ` +
-      `${m.input.join("+").padEnd(8)} ` +
-      `ctx=${String(m.contextWindow).padStart(7)} ` +
-      `max=${String(m.maxTokens).padStart(5)} ` +
-      `\$${m.cost.input.toFixed(3)}/\$${m.cost.output.toFixed(3)}`,
-    )
-  }
-}
+// if (import.meta.url === `file://${process.argv[1]}`) {
+//   const { env } = await import('node:process');
+//   const key = env.OPENMODEL_API_KEY
+//   const models = await fetchOpenModelModels({
+//     apiKey: key ?? undefined,
+//   })
+//   for (const m of models) {
+//     console.log(
+//       `${m.id.padEnd(30)} ` +
+//       `${m.api.padEnd(22)} ` +
+//       `${m.input.join("+").padEnd(8)} ` +
+//       `ctx=${String(m.contextWindow).padStart(7)} ` +
+//       `max=${String(m.maxTokens).padStart(5)} ` +
+//       `\$${m.cost.input.toFixed(3)}/\$${m.cost.output.toFixed(3)}`,
+//     )
+//   }
+// }

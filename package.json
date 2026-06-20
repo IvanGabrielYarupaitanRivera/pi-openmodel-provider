@@ -19,10 +19,17 @@
   "files": [
     "index.ts",
     "src/",
+    "src/stub.d.ts",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
+  "devDependencies": {
+    "@types/node": "25.6.0",
+    "prettier": "^3.5.0",
+    "tsx": "4.22.4",
+    "typescript": "6.0.3"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test:models": "tsx src/models.ts"
