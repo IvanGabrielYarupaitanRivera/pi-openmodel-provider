@@ -27,15 +27,17 @@ Set your OpenModel API key using one of these methods:
 In pi, run:
 
 ```txt
-/login openmodel
+/login
 ```
 
 Then:
-1. Select **"Paste API key manually"**
-2. Go to [console.openmodel.ai](https://console.openmodel.ai)
-3. In the sidebar, click **API Keys**
-4. Click **Create API Key**, give it a name, and copy the generated key
-5. Paste the key in pi
+1. Select **"Use a subscription"**
+2. Select **OpenModel** from the provider list
+3. Select **"Paste API key manually"**
+4. Go to [console.openmodel.ai](https://console.openmodel.ai)
+5. In the sidebar, click **API Keys**
+6. Click **Create API Key**, give it a name, and copy the generated key
+7. Paste the key in pi
 
 The key starts with `om-` and is automatically stored in pi's auth file.
 
