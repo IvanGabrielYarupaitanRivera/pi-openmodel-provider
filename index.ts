@@ -3,7 +3,6 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 import { fetchOpenModelModels } from "./src/models.js";
 
