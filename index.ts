@@ -24,14 +24,13 @@ import type {
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 
 export default async function (pi: ExtensionAPI) {
-  // Register providers WITHOUT models initially (they'll be fetched after auth)
-  // This prevents 401 errors on startup and makes /login appear correctly
+  // Register OpenModel as a single provider (not three separate ones)
+  // This prevents duplicate entries in /login
 
   pi.registerProvider("openmodel", {
     name: "OpenModel",
     baseUrl: "https://api.openmodel.ai",
     apiKey: "$OPENMODEL_API_KEY",
-    api: "anthropic-messages",
     oauth: {
       name: "OpenModel",
       login,
@@ -40,35 +39,4 @@ export default async function (pi: ExtensionAPI) {
     },
     models: [], // Empty initially, will be populated after login
   });
-
-  pi.registerProvider("openmodel-responses", {
-    name: "OpenModel",
-    baseUrl: "https://api.openmodel.ai",
-    apiKey: "$OPENMODEL_API_KEY",
-    api: "openai-responses",
-    oauth: {
-      name: "OpenModel",
-      login,
-      refreshToken,
-      getApiKey,
-    },
-    models: [],
-  });
-
-  pi.registerProvider("openmodel-gemini", {
-    name: "OpenModel",
-    baseUrl: "https://api.openmodel.ai",
-    apiKey: "$OPENMODEL_API_KEY",
-    api: "google-generative-ai",
-    oauth: {
-      name: "OpenModel",
-      login,
-      refreshToken,
-      getApiKey,
-    },
-    models: [],
-  });
-
-  // TODO: Add a command to fetch models after login
-  // This will populate the models array dynamically
 }
