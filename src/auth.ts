@@ -97,7 +97,7 @@ export async function login(callbacks: OAuthLoginCallbacks): Promise<OAuthCreden
     // Then prompt for the API key
     const apiKey = sanitizeApiKey(
       await callbacks.onPrompt({
-        message: `1. Go to ${CONSOLE_URL}\n2. Create an API key (Settings > API Keys)\n3. Paste the key here (starts with "om-"):`,
+        message: `1. Open ${CONSOLE_URL}\n2. In the sidebar, click on API Keys\n3. Click Create API Key, give it a name, and copy the generated key\n4. Paste the key here (starts with "om-"):`,
       }),
     )
 
