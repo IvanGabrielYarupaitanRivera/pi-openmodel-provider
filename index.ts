@@ -2,20 +2,18 @@
  * OpenModel provider for pi.
  *
  * Connects pi to OpenModel.ai's gateway API.
- * Supports models from 8+ providers through 3 API protocols:
- *   - Anthropic Messages API (Anthropic, DeepSeek, DashScope, Xiaomi, Kimi, MiniMax, Zai)
- *   - OpenAI Responses API (OpenAI, DashScope)
- *   - Google Generative AI API (Gemini)
+ * Supports models from 8+ providers through 3 API protocols.
  *
- * Models are fetched from OpenModel's API at startup.
- * Model stability data enhances model names with health status.
+ * Features:
+ *   🔄 Dynamic model discovery from OpenModel API
+ *   🔐 OAuth login via /login openmodel
+ *   📊 Model stability metrics via /openmodel-stability
+ *   🩺 Health status indicators on model names
  *
- * Commands:
- *   /openmodel-stability         - Show stability for all models
- *   /openmodel-stability <model> - Show detailed stability for a model
- *
- * Authentication:
- *   Set OPENMODEL_API_KEY environment variable.
+ * Quick start:
+ *   1. Set OPENMODEL_API_KEY env var, OR
+ *   2. Run /login openmodel and paste your API key
+ *   3. pi --model openmodel/deepseek-v4-flash
  */
 
 import type {
@@ -28,8 +26,10 @@ import {
   fetchModelStabilitySummary,
   fetchModelStabilityDetail,
   formatHealthStatus,
+  formatConfidence,
   type HealthStatus,
 } from "./src/stability.ts"
+import { login, refreshToken, getApiKey } from "./src/auth.ts"
 
 export default async function (pi: ExtensionAPI) {
   const apiKey = "$OPENMODEL_API_KEY"
@@ -40,7 +40,7 @@ export default async function (pi: ExtensionAPI) {
     fetchModelStabilitySummary().catch(() => [] as Array<{ model_name: string; health_status: HealthStatus }>),
   ])
 
-  // Build stability lookup
+  // Build stability lookup for model name enrichment
   const stabilityByModel = new Map(
     stabilityMap.map((s) => [s.model_name, s.health_status]),
   )
@@ -52,11 +52,13 @@ export default async function (pi: ExtensionAPI) {
 
   for (const m of models) {
     const health = stabilityByModel.get(m.id)
-    const healthPrefix = health ? formatHealthStatus(health).split(" ")[0] + " " : ""
+    const healthPrefix = health
+      ? `${formatHealthStatus(health).split(" ")[0]} `
+      : ""
 
     const config: ProviderModelConfig = {
       id: m.id,
-      name: `${healthPrefix}${m.id} (OpenModel)`,
+      name: `${healthPrefix}${m.id}`,
       reasoning: m.reasoning,
       input: m.input,
       cost: m.cost,
@@ -80,6 +82,12 @@ export default async function (pi: ExtensionAPI) {
       baseUrl: "https://api.openmodel.ai",
       apiKey,
       api: "anthropic-messages",
+      oauth: {
+        name: "OpenModel",
+        login,
+        refreshToken,
+        getApiKey,
+      },
       models: messagesModels,
     })
   }
@@ -91,6 +99,12 @@ export default async function (pi: ExtensionAPI) {
       baseUrl: "https://api.openmodel.ai",
       apiKey,
       api: "openai-responses",
+      oauth: {
+        name: "OpenModel",
+        login,
+        refreshToken,
+        getApiKey,
+      },
       models: responsesModels,
     })
   }
@@ -102,12 +116,48 @@ export default async function (pi: ExtensionAPI) {
       baseUrl: "https://api.openmodel.ai",
       apiKey,
       api: "google-generative-ai",
+      oauth: {
+        name: "OpenModel",
+        login,
+        refreshToken,
+        getApiKey,
+      },
       models: geminiModels,
     })
   }
 
   // -----------------------------------------------------------------------
-  // /openmodel-stability command
+  // /openmodel - Status and quick info
+  // -----------------------------------------------------------------------
+  pi.registerCommand("openmodel", {
+    description: "Show OpenModel provider status and quick actions",
+    handler: async (_args, ctx) => {
+      const totalModels = models.length
+      const messagesCount = messagesModels.length
+      const responsesCount = responsesModels.length
+      const geminiCount = geminiModels.length
+
+      const lines = [
+        "╔══════════════════════════════════════╗",
+        "║        OpenModel.ai Provider         ║",
+        "╠══════════════════════════════════════╣",
+        `║  Models:     ${String(totalModels).padStart(3)} total              ║`,
+        `║  Messages:   ${String(messagesCount).padStart(3)} (Anthropic fmt)   ║`,
+        `║  Responses:  ${String(responsesCount).padStart(3)} (OpenAI fmt)     ║`,
+        `║  Gemini:     ${String(geminiCount).padStart(3)} (Google fmt)       ║`,
+        "╠══════════════════════════════════════╣",
+        "║  Commands:                          ║",
+        "║  /login openmodel  - Set API key    ║",
+        "║  /openmodel-stability - View health ║",
+        "╚══════════════════════════════════════╝",
+      ]
+
+      ctx.ui.notify(lines.join("\n"), "info")
+    },
+  })
+
+  // -----------------------------------------------------------------------
+  // /openmodel-stability - Model health dashboard
   // -----------------------------------------------------------------------
   pi.registerCommand("openmodel-stability", {
     description: "Show OpenModel model stability metrics",
@@ -119,24 +169,33 @@ export default async function (pi: ExtensionAPI) {
           const detail = await fetchModelStabilityDetail(modelName)
           const lines = [
             `📊 ${detail.model_name}`,
-            `━━━━━━━━━━━━━━━━━━━━━━━━━`,
-            `Health:   ${formatHealthStatus(detail.health_status)}`,
-            `Success:  ${detail.summary.success_rate.toFixed(2)}%`,
-            `Latency:  ${detail.summary.avg_latency_ms.toFixed(0)}ms`,
-            `TTFT:     ${detail.summary.avg_ttft_ms.toFixed(0)}ms`,
-            `Throughput: ${detail.summary.avg_tps.toFixed(1)} t/s`,
-            `Confidence: ${detail.confidence}`,
-            `Updated:  ${new Date(detail.updated_at * 1000).toLocaleString()}`,
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+            `Health:     ${formatHealthStatus(detail.health_status)}`,
+            `Success:    ${detail.summary.success_rate.toFixed(2)}%`,
+            `Latency:    ${detail.summary.avg_latency_ms.toFixed(0)}ms avg`,
+            `TTFT:       ${detail.summary.avg_ttft_ms.toFixed(0)}ms avg`,
+            `Throughput: ${detail.summary.avg_tps.toFixed(1)} tok/s`,
+            `Confidence: ${formatConfidence(detail.confidence)}`,
+            `Updated:    ${new Date(detail.updated_at * 1000).toLocaleString()}`,
             ``,
-            `Hourly data (last 24h):`,
+            `📈 Hourly data (last 24h):`,
           ]
           for (const point of detail.series) {
             const time = new Date(point.ts * 1000).toLocaleTimeString()
-            lines.push(`  ${time}  ${point.success_rate.toFixed(1)}%  ${point.avg_latency_ms.toFixed(0)}ms  ${point.avg_tps.toFixed(1)} t/s`)
+            lines.push(
+              `  ${time.padStart(8)}  ` +
+              `${point.success_rate.toFixed(1).padStart(5)}%  ` +
+              `${String(point.avg_latency_ms.toFixed(0)).padStart(5)}ms  ` +
+              `${point.avg_tps.toFixed(1).padStart(6)} t/s  ` +
+              `${point.confidence}`,
+            )
           }
           ctx.ui.notify(lines.join("\n"), "info")
-        } catch (err) {
-          ctx.ui.notify(`Failed to fetch stability for "${modelName}"`, "error")
+        } catch {
+          ctx.ui.notify(
+            `❌ Could not fetch stability for "${modelName}". Check the model name.`,
+            "error",
+          )
         }
       } else {
         // Show summary for all models
@@ -146,27 +205,38 @@ export default async function (pi: ExtensionAPI) {
             ctx.ui.notify("No stability data available.", "warning")
             return
           }
-          const lines = ["📊 OpenModel Stability (24h):", ""]
-          // Sort by confidence then success rate
+          const lines = [
+            "📊 OpenModel Stability (24h)",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+          ]
+          // Sort: operational first, then by success rate
+          const statusOrder: Record<string, number> = {
+            operational: 0,
+            healthy: 1,
+            degraded: 2,
+            unstable: 3,
+            no_data: 4,
+          }
           const sorted = [...summary].sort((a, b) => {
-            const confOrder = { high: 0, medium: 1, low: 2 }
-            const ac = confOrder[a.confidence] ?? 3
-            const bc = confOrder[b.confidence] ?? 3
-            if (ac !== bc) return ac - bc
+            const ao = statusOrder[a.health_status] ?? 5
+            const bo = statusOrder[b.health_status] ?? 5
+            if (ao !== bo) return ao - bo
             return b.success_rate - a.success_rate
           })
+
           for (const s of sorted) {
-            const health = formatHealthStatus(s.health_status).split(" ")[0]
+            const healthEmoji = formatHealthStatus(s.health_status).split(" ")[0]
+            const paddedName = s.model_name.padEnd(28).slice(0, 28)
             lines.push(
-              `  ${health}  ${s.model_name.padEnd(30)} ` +
-              `${s.success_rate.toFixed(1)}%  ` +
-              `${s.avg_latency_ms.toFixed(0)}ms  ` +
-              `${s.avg_tps.toFixed(1)} t/s`,
+              `  ${healthEmoji} ${paddedName} ` +
+              `${s.success_rate.toFixed(1).padStart(5)}%  ` +
+              `${s.avg_latency_ms.toFixed(0).padStart(5)}ms  ` +
+              `${s.avg_tps.toFixed(1).padStart(6)} t/s`,
             )
           }
           ctx.ui.notify(lines.join("\n"), "info")
-        } catch (err) {
-          ctx.ui.notify("Failed to fetch stability summary.", "error")
+        } catch {
+          ctx.ui.notify("❌ Failed to fetch stability summary.", "error")
         }
       }
     },
