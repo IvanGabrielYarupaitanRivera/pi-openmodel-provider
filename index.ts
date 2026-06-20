@@ -7,7 +7,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { fetchOpenModelModels } from "./src/models.ts"
 import { login, refreshToken, getApiKey } from "./src/auth.ts"
-import { readFileSync } from "fs"
+import { readFileSync } from "node:fs"
 
 function getApiKeyFromAuth(): string | null {
   try {
