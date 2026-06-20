@@ -24,19 +24,23 @@ import type {
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 
 export default async function (pi: ExtensionAPI) {
-  // Register OpenModel as a single provider (not three separate ones)
-  // This prevents duplicate entries in /login
+  console.log("[OpenModel] Registering provider...")
 
-  pi.registerProvider("openmodel", {
-    name: "OpenModel",
-    baseUrl: "https://api.openmodel.ai",
-    apiKey: "$OPENMODEL_API_KEY",
-    oauth: {
+  try {
+    pi.registerProvider("openmodel", {
       name: "OpenModel",
-      login,
-      refreshToken,
-      getApiKey,
-    },
-    models: [], // Empty initially, will be populated after login
-  });
+      baseUrl: "https://api.openmodel.ai",
+      apiKey: "$OPENMODEL_API_KEY",
+      oauth: {
+        name: "OpenModel",
+        login,
+        refreshToken,
+        getApiKey,
+      },
+      models: [], // Empty initially, will be populated after login
+    })
+    console.log("[OpenModel] Provider registered successfully")
+  } catch (error) {
+    console.error("[OpenModel] Failed to register provider:", error)
+  }
 }
