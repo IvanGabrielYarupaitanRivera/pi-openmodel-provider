@@ -5,10 +5,10 @@
  * Supports models from 8+ providers through 3 API protocols.
  *
  * Features:
- *   🔄 Dynamic model discovery from OpenModel API
- *   🔐 OAuth login via /login openmodel
- *   📊 Model stability metrics via /openmodel-stability
- *   🩺 Health status indicators on model names
+ *   Dynamic model discovery from OpenModel API
+ *   OAuth login via /login openmodel
+ *   Model stability metrics via /openmodel-stability
+ *   Health status indicators on model names
  *
  * Quick start:
  *   1. Set OPENMODEL_API_KEY env var, OR
@@ -114,3 +114,4 @@ export default async function (pi: ExtensionAPI) {
     if (modelsLoaded) return;
     await loadOpenModelModels(pi);
   });
+}
