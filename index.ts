@@ -25,17 +25,14 @@ export default async function (pi: ExtensionAPI) {
 // Load models after authentication (session_start)
 pi.on("session_start", async (_event, ctx) => {
   try {
-    // Wait for auth to be configured
-    let apiKey = process.env.OPENMODEL_API_KEY;
-    if (!apiKey) {
-      // Try to read from auth.json
-      try {
-        const auth = require("fs").readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
-        const authData = JSON.parse(auth);
-        apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
-      } catch (e) {
-        // Not found
-      }
+    // Try to get API key from auth.json
+    let apiKey = undefined;
+    try {
+      const auth = require("fs").readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
+      const authData = JSON.parse(auth);
+      apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
+    } catch (e) {
+      // Not found
     }
 
     if (!apiKey) {
