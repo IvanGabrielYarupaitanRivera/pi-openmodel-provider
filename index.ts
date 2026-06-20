@@ -3,14 +3,11 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { promises as fs } from "node:fs";
-import { homedir } from "node:os";
 
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 import { fetchOpenModelModels } from "./src/models.js";
 
 export default function (pi: ExtensionAPI) {
-  // Register OpenModel provider with OAuth
   pi.registerProvider("openmodel", {
     name: "OpenModel",
     baseUrl: "https://api.openmodel.ai",
@@ -30,8 +27,8 @@ pi.on("before_agent_start", async (_event: unknown, ctx: any) => {
     // Read API key from auth.json
     let apiKey: string | null = null;
     try {
-      const authPath = `${homedir()}/.pi/agent/auth.json`;
-      const fileContent = await fs.readFile(authPath, "utf-8");
+      const authPath = "/c/Users/Admin/.pi/agent/auth.json";
+      const fileContent = await require("fs").readFileSync(authPath, "utf-8");
       const authData = JSON.parse(fileContent);
       apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
     } catch (error) {
