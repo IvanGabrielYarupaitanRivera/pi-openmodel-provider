@@ -1,12 +1,22 @@
 /**
- * OpenModel provider for pi - KISS
+ * OpenModel provider for pi.
+ *
+ * Models are fetched from OpenModel's API at startup.
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { login, refreshToken, getApiKey } from "./src/auth.js";
-import { fetchOpenModelModels } from "./src/models.js";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
+import { fetchOpenModelModels } from "./src/models.ts"
+import { login, refreshToken, getApiKey } from "./src/auth.ts"
 
-export default function (pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
+  let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
+
+  try {
+    models = await fetchOpenModelModels()
+  } catch (e) {
+    console.log("[OpenModel] Models will load after API key is configured")
+  }
+
   pi.registerProvider("openmodel", {
     name: "OpenModel",
     baseUrl: "https://api.openmodel.ai",
@@ -17,49 +27,14 @@ export default function (pi: ExtensionAPI) {
       refreshToken,
       getApiKey,
     },
-  });
+    models: models.map((model) => ({
+      id: model.id,
+      name: model.name,
+      reasoning: model.reasoning,
+      input: model.input,
+      cost: model.cost,
+      contextWindow: model.contextWindow,
+      maxTokens: model.maxTokens,
+    })),
+  })
 }
-
-// Load models when API key exists (before_agent_start)
-pi.on("before_agent_start", async (_event: unknown, ctx: any) => {
-  try {
-    // Read API key from auth.json
-    let apiKey: string | null = null;
-    try {
-      const authPath = "/c/Users/Admin/.pi/agent/auth.json";
-      const fileContent = await require("fs").readFileSync(authPath, "utf-8");
-      const authData = JSON.parse(fileContent);
-      apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
-    } catch (error) {
-      // Not found
-    }
-
-    if (!apiKey) {
-      console.log("[OpenModel] API key not found in auth.json");
-      return;
-    }
-
-    const models = await fetchOpenModelModels();
-    console.log(`[OpenModel] Loaded ${models.length} models`);
-
-    pi.registerProvider("openmodel", {
-      name: "OpenModel",
-      baseUrl: "https://api.openmodel.ai",
-      apiKey: "$OPENMODEL_API_KEY",
-      api: "anthropic-messages",
-      models: models.map((m) => ({
-        id: m.id,
-        name: m.name,
-        reasoning: m.reasoning,
-        input: m.input as any,
-        cost: m.cost,
-        contextWindow: m.contextWindow,
-        maxTokens: m.maxTokens,
-      })),
-    });
-
-    console.log(`[OpenModel] Models registered`);
-  } catch (error) {
-    console.error("[OpenModel] Failed to load models:", error);
-  }
-});
