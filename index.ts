@@ -14,11 +14,8 @@ function getApiKeyFromAuth(): string | null {
     const authPath = "C:/Users/Admin/.pi/agent/auth.json"
     const content = readFileSync(authPath, "utf-8")
     const data = JSON.parse(content)
-    const key = data.openmodel?.access || data.openmodel?.refresh || null
-    console.log(`[OpenModel] API key found: ${key?.slice(0, 10)}...`)
-    return key
-  } catch (e) {
-    console.log("[OpenModel] No API key in auth.json")
+    return data.openmodel?.access || data.openmodel?.refresh || null
+  } catch {
     return null
   }
 }
@@ -29,14 +26,10 @@ export default async function (pi: ExtensionAPI) {
 
   if (apiKey) {
     try {
-      console.log("[OpenModel] Fetching models...")
       models = await fetchOpenModelModels({ apiKey })
-      console.log(`[OpenModel] Loaded ${models.length} models`)
-    } catch (e) {
-      console.log("[OpenModel] Failed to load models:", e)
+    } catch {
+      // Models will load after API key is configured
     }
-  } else {
-    console.log("[OpenModel] No API key, registering with 0 models")
   }
 
   pi.registerProvider("openmodel", {
@@ -62,5 +55,35 @@ export default async function (pi: ExtensionAPI) {
     })),
   })
 
-  console.log(`[OpenModel] Registered with ${models.length} models`)
+  // /openmodel - Show provider status
+  pi.registerCommand("openmodel", {
+    description: "Show OpenModel provider status",
+    handler: async (_args: string, ctx: any) => {
+      const key = getApiKeyFromAuth()
+      const status = key ? "✅ Configured" : "❌ Not configured"
+      const count = models.length
+
+      const lines = [
+        "╔════════════════════════════════╗",
+        "║        OpenModel.ai            ║",
+        "╠════════════════════════════════╣",
+        `║  Status: ${status.padEnd(20)}║`,
+        `║  Models: ${String(count).padStart(3)} available           ║`,
+        "╠════════════════════════════════╣",
+        "║  Commands:                     ║",
+        "║  /model openmodel/...          ║",
+        "║  /openmodel-stability          ║",
+        "╚════════════════════════════════╝",
+      ]
+      ctx.ui.notify(lines.join("\n"), "info")
+    },
+  })
+
+  // /openmodel-stability - Show model health metrics
+  pi.registerCommand("openmodel-stability", {
+    description: "Show model stability metrics",
+    handler: async (_args: string | undefined, ctx: any) => {
+      ctx.ui.notify("Feature coming soon!", "info")
+    },
+  })
 }
