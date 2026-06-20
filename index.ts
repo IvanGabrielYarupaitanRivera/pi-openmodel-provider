@@ -5,6 +5,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { login, refreshToken, getApiKey } from "./src/auth.js";
+import { getApiKey as getAuthApiKey } from "@earendil-works/pi-ai";
 import { fetchOpenModelModels } from "./src/models.js";
 
 export default async function (pi: ExtensionAPI) {
@@ -20,13 +21,32 @@ export default async function (pi: ExtensionAPI) {
       getApiKey,
     },
   });
+}
 
-  // Load models after registration
+// Load models after authentication (session_start)
+pi.on("session_start", async (_event, ctx) => {
   try {
+    // Wait for auth to be configured
+    let apiKey = process.env.OPENMODEL_API_KEY;
+    if (!apiKey) {
+      // Try to get from auth.json
+      try {
+        const auth = require("fs").readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
+        const authData = JSON.parse(auth);
+        apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
+      } catch (e) {
+        // Not found
+      }
+    }
+
+    if (!apiKey) {
+      console.log("[OpenModel] API key not configured yet")
+      return
+    }
+
     const models = await fetchOpenModelModels();
     console.log(`[OpenModel] Loaded ${models.length} models`);
 
-    // Register models
     pi.registerProvider("openmodel", {
       name: "OpenModel",
       baseUrl: "https://api.openmodel.ai",
@@ -47,4 +67,4 @@ export default async function (pi: ExtensionAPI) {
   } catch (error) {
     console.error("[OpenModel] Failed to load models:", error);
   }
-}
+});
