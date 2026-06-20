@@ -3,6 +3,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { readFileSync } from "node:fs";
 
 import { login, refreshToken, getApiKey } from "./src/auth.js";
 import { fetchOpenModelModels } from "./src/models.js";
@@ -24,10 +25,10 @@ export default function (pi: ExtensionAPI) {
 // Load models when API key exists
 pi.on("session_start", async (_event, ctx) => {
   try {
-    // Check if API key exists
-    let apiKey = undefined;
+    // Check if API key exists in auth.json
+    let apiKey: string | undefined = undefined;
     try {
-      const auth = require("fs").readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
+      const auth = readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
       const authData = JSON.parse(auth);
       apiKey = authData.openmodel?.access || authData.openmodel?.refresh;
     } catch (e) {
