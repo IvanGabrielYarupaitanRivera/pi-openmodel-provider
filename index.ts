@@ -11,7 +11,7 @@ import { readFileSync } from "fs"
 
 function getApiKeyFromAuth(): string | null {
   try {
-    const authPath = "/c/Users/Admin/.pi/agent/auth.json"
+    const authPath = "C:/Users/Admin/.pi/agent/auth.json"
     const content = readFileSync(authPath, "utf-8")
     const data = JSON.parse(content)
     const key = data.openmodel?.access || data.openmodel?.refresh || null
