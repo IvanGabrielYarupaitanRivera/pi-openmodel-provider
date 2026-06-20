@@ -43,6 +43,7 @@ export default async function (pi: ExtensionAPI) {
     name: "OpenModel",
     baseUrl: "https://api.openmodel.ai",
     apiKey: "$OPENMODEL_API_KEY",
+    api: "anthropic-messages",
     oauth: {
       name: "OpenModel",
       login,
@@ -52,6 +53,7 @@ export default async function (pi: ExtensionAPI) {
     models: models.map((model) => ({
       id: model.id,
       name: model.name,
+      api: model.api,
       reasoning: model.reasoning,
       input: model.input,
       cost: model.cost,
