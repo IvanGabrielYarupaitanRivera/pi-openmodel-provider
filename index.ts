@@ -21,7 +21,7 @@ import type {
   ProviderModelConfig,
 } from "@earendil-works/pi-coding-agent";
 
-import { login, refreshToken, getApiKey } from "src/auth.js";
+import { login, refreshToken, getApiKey } from "./src/auth.js";
 
 export default async function (pi: ExtensionAPI) {
   // Register providers WITHOUT models initially (they'll be fetched after auth)
