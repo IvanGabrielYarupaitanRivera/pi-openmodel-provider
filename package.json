@@ -1,0 +1,43 @@
+{
+  "name": "pi-openmodel-provider",
+  "version": "0.1.0",
+  "description": "pi custom provider for OpenModel.ai - Multi-model AI gateway",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "openmodel",
+    "provider",
+    "ai-gateway"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/user/pi-openmodel-provider.git"
+  },
+  "homepage": "https://github.com/user/pi-openmodel-provider#readme",
+  "files": [
+    "index.ts",
+    "src/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:models": "tsx src/models.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.75.5"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  }
+}
