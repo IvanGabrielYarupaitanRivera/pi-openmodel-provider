@@ -74,16 +74,17 @@ function credentialsFromApiKey(apiKey: string): OAuthCredentials {
  * 2. Manual: prompts the user to paste their API key
  */
 export async function login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-  // Offer login method choice
-  const method = callbacks.onSelect
-    ? await callbacks.onSelect({
-        message: "How would you like to authenticate with OpenModel?",
-        options: [
-          { id: "browser", label: "🌐 Open console in browser" },
-          { id: "paste", label: "📋 Paste API key manually" },
-        ],
-      })
-    : undefined
+  // Offer login method choice (onSelect is optional)
+  let method: string | undefined
+  if (callbacks.onSelect) {
+    method = await callbacks.onSelect({
+      message: "How would you like to authenticate with OpenModel?",
+      options: [
+        { id: "browser", label: "🌐 Open console in browser" },
+        { id: "paste", label: "📋 Paste API key manually" },
+      ],
+    })
+  }
 
   if (!method) {
     throw new Error("Login cancelled")
@@ -105,13 +106,16 @@ export async function login(callbacks: OAuthLoginCallbacks): Promise<OAuthCreden
     }
 
     if (!isValidApiKey(apiKey)) {
-      const retry = await callbacks.onSelect({
-        message: `Invalid API key format. Key should start with "om-". Try again?`,
-        options: [
-          { id: "retry", label: "🔄 Try again" },
-          { id: "cancel", label: "❌ Cancel" },
-        ],
-      })
+      let retry: string | undefined
+      if (callbacks.onSelect) {
+        retry = await callbacks.onSelect({
+          message: `Invalid API key format. Key should start with "om-". Try again?`,
+          options: [
+            { id: "retry", label: "🔄 Try again" },
+            { id: "cancel", label: "❌ Cancel" },
+          ],
+        })
+      }
 
       if (retry !== "retry") {
         throw new Error("Login cancelled - invalid API key")
