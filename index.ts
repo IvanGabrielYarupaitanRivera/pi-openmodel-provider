@@ -108,10 +108,9 @@ export default async function (pi: ExtensionAPI) {
 
   // Load models after provider is registered
   await loadOpenModelModels(pi);
-}
 
-// Load models on session start
-pi.on("session_start", async (_event, ctx) => {
-  if (modelsLoaded) return;
-  await loadOpenModelModels(pi);
-});
+  // Load models on session start
+  pi.on("session_start", async (_event, ctx) => {
+    if (modelsLoaded) return;
+    await loadOpenModelModels(pi);
+  });
