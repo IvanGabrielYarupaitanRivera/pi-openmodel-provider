@@ -95,7 +95,7 @@ const KNOWN_PRICING: Record<string, { input: number; output: number }> = {
 function guessContextWindow(id: string): number {
   if (/claude|sonnet|opus|haiku/i.test(id)) return 200_000
   if (/gemini/i.test(id)) return 1_000_000
-  if (/deepseek/i.test(id)) return 128_000
+  if (/deepseek/i.test(id)) return 1_000_000
   if (/gpt-5/i.test(id)) return 128_000
   if (/kimi/i.test(id)) return 128_000
   if (/qwen/i.test(id)) return 131_072
