@@ -1,20 +1,10 @@
 # pi-openmodel-provider
 
-A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects pi to the [OpenModel.ai](https://www.openmodel.ai) API.
+A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects pi to [OpenModel.ai](https://www.openmodel.ai) — a unified AI API gateway.
 
 > **Disclaimer:** This is an unofficial, community-maintained package. I am not affiliated with, endorsed by, or connected to OpenModel in any way. This provider simply forwards requests to the public OpenModel API using your own API key.
 
 > **Note:** This package only provides a model _provider_. It does **not** include an API key. You must bring your own OpenModel API key.
-
-## Models
-
-Models are fetched live from OpenModel's Provider API at startup, so new models show up without a package release.
-
-You can list the current OpenModel models with:
-
-```sh
-pi --list-models
-```
 
 ## Install
 
@@ -22,11 +12,17 @@ pi --list-models
 pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
 ```
 
+Then reload pi:
+
+```txt
+/reload
+```
+
 ## Setup
 
 Set your OpenModel API key using one of these methods:
 
-### 1. Browser login (recommended)
+### 1. Login in pi (recommended)
 
 In pi, run:
 
@@ -34,15 +30,16 @@ In pi, run:
 /login openmodel
 ```
 
-This opens OpenModel Console in your browser where you can create or copy your API key. The key is automatically stored in pi's auth file.
+Then:
+1. Select **"Paste API key manually"**
+2. Go to [console.openmodel.ai](https://console.openmodel.ai)
+3. In the sidebar, click **API Keys**
+4. Click **Create API Key**, give it a name, and copy the generated key
+5. Paste the key in pi
 
-### 2. Environment variable
+The key starts with `om-` and is automatically stored in pi's auth file.
 
-```sh
-export OPENMODEL_API_KEY="om-..."
-```
-
-### 3. Auth file
+### 2. Auth file
 
 Create `~/.pi/agent/auth.json`:
 
@@ -52,9 +49,15 @@ Create `~/.pi/agent/auth.json`:
 }
 ```
 
+### 3. Environment variable
+
+```sh
+export OPENMODEL_API_KEY="om-..."
+```
+
 ## Usage
 
-After installing and setting your API key, select an OpenModel model in pi:
+After installing and setting your API key:
 
 ```txt
 /model openmodel/deepseek-v4-flash
@@ -65,6 +68,26 @@ Any query will then use the OpenModel API. You can list available models:
 ```sh
 pi --list-models
 ```
+
+## Models
+
+Models are fetched live from OpenModel's API at startup, so new models show up without a package release.
+
+If you don't see any models after setup, run `/reload` to fetch them.
+
+### Supported Providers
+
+| Provider | Models |
+|----------|--------|
+| OpenAI | GPT-5.x family |
+| Anthropic | Claude Opus/Sonnet/Haiku |
+| Google Gemini | Gemini Flash/Pro |
+| DeepSeek | DeepSeek V4 (1M context) |
+| Alibaba Qwen | Qwen3.x family |
+| Xiaomi (MiMo) | Mimo v2.x |
+| Moonshot (Kimi) | Kimi K2.x |
+| MiniMax | MiniMax M2.x/M3 |
+| ZAI (GLM) | GLM-4.x/5.x |
 
 ## Model discovery
 
@@ -85,32 +108,35 @@ OpenModel does not yet expose model pricing through its Provider API. The provid
 
 ## Features
 
-- **42 models** from 8+ providers (dynamically fetched)
+- **41 models** from 9+ providers (dynamically fetched)
 - **3 protocols**: Messages (Anthropic), Responses (OpenAI), Gemini (Google)
-- **Model stability metrics** via `/openmodel-stability` command
+- **Model stability metrics** via `/openmodel-stability`
 - **1M context window** for DeepSeek V4 models
-- **No hardcoding** - new models appear automatically
-
-## Supported Providers
-
-| Provider | Models |
-|----------|--------|
-| OpenAI | GPT-5.x family |
-| Anthropic | Claude Opus/Sonnet/Haiku |
-| Google Gemini | Gemini Flash/Pro |
-| DeepSeek | DeepSeek V4 (1M contexto) |
-| Alibaba Qwen | Qwen3.x family |
-| Xiaomi (MiMo) | Mimo v2.x |
-| Moonshot (Kimi) | Kimi K2.x |
-| MiniMax | MiniMax M2.x/M3 |
-| ZAI (GLM) | GLM-4.x/5.x |
+- **No hardcoding** — new models appear automatically
 
 ## Commands
 
 ```txt
-/openmodel                # Show provider status
-/openmodel-stability      # Show health metrics for all models
-/openmodel-stability <model>  # Show detailed metrics for a model
+/openmodel                Show provider status
+/openmodel-stability      Show health metrics for all models
+/openmodel-stability <model>  Show detailed metrics for a specific model
+```
+
+## Development
+
+```sh
+# Clone the repo
+git clone https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
+cd pi-openmodel-provider
+
+# Install dependencies
+npm install
+
+# Type check
+npm run typecheck
+
+# Test model fetching
+npm run test:models
 ```
 
 ## Contributing
