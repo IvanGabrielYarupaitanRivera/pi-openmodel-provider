@@ -1,65 +1,75 @@
 # pi-openmodel-provider
 
-Custom provider for [OpenModel.ai](https://www.openmodel.ai) — a unified AI API gateway that provides a single access point to multiple AI model providers.
+Extensión de pi para OpenModel.ai - Un gateway multi-modelo que te da acceso a 40+ modelos de IA.
 
-## Features
-
-- 🔌 **Automatic model discovery** — Fetches available models from OpenModel's API
-- 🔄 **3 protocol support** — Messages (Anthropic), Responses (OpenAI), Gemini (Google)
-- 🧠 **Reasoning detection** — Automatically enables thinking for compatible models
-- 💰 **Known pricing** — Pre-configured costs for popular models
-- 🔐 **Secure auth** — Uses environment variable for API key
-
-## Supported Providers
-
-| Provider | Protocol | Models |
-|----------|----------|--------|
-| OpenAI | Responses | GPT-5.x family |
-| Anthropic | Messages | Claude Opus/Sonnet/Haiku |
-| Google Gemini | Gemini | Gemini Flash/Pro |
-| DeepSeek | Messages | DeepSeek V4 |
-| DashScope (Alibaba) | Messages & Responses | Qwen3.x family |
-| Xiaomi (MiMo) | Messages | Mimo v2.x |
-| Moonshot (Kimi) | Messages | Kimi K2.x |
-| MiniMax | Messages | MiniMax M2.x/M3 |
-| ZAI (GLM) | Messages | GLM-4.x/5.x |
-
-## Installation
+## Instalación
 
 ```bash
-# Install from local path
-pi install C:/path/to/pi-openmodel-provider
+pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
 ```
 
-## Setup
+## Uso
 
-1. Get an API key from [console.openmodel.ai](https://console.openmodel.ai)
-2. Set the environment variable:
-   ```bash
-   export OPENMODEL_API_KEY="om-your-api-key"
-   ```
+### 1️⃣ Autenticación (una sola vez)
 
-## Usage
+```
+/login openmodel
+```
 
-```bash
-# List available models
-pi --list-models
+Te mostrará dos opciones:
+- 🌐 **Abrir consola en navegador** → te lleva a console.openmodel.ai
+- 📋 **Pegar API key manualmente**
 
-# Use OpenModel models
+Tu API key se guarda automáticamente en pi.
+
+### 2️⃣ Usar modelos
+
+```
 pi --model openmodel/deepseek-v4-flash
-pi --model openmodel-responses/gpt-5.4-mini
-pi --model openmodel-gemini/gemini-3.5-flash
-
-# With thinking enabled
-pi --model openmodel/deepseek-v4-flash --thinking high
 ```
 
-## Development
+## Modelos disponibles
+
+| Proveedor | Modelos |
+|-----------|---------|
+| OpenAI | GPT-5.x family |
+| Anthropic | Claude Opus/Sonnet/Haiku |
+| Google Gemini | Gemini Flash/Pro |
+| DeepSeek | DeepSeek V4 (1M contexto) |
+| Alibaba Qwen | Qwen3.x family |
+| Xiaomi (MiMo) | Mimo v2.x |
+| Moonshot (Kimi) | Kimi K2.x |
+| MiniMax | MiniMax M2.x/M3 |
+| ZAI (GLM) | GLM-4.x/5.x |
+
+## Comandos útiles
+
+```
+/openmodel                # Ver estado de la extensión
+/openmodel-stability      # Ver salud de todos los modelos
+/openmodel-stability <model>  # Ver métricas de un modelo
+```
+
+## Características
+
+- ✅ **42 modelos** dinámicos (se actualizan automáticamente)
+- ✅ **3 protocolos**: Messages (Anthropic), Responses (OpenAI), Gemini (Google)
+- ✅ **Estabilidad en tiempo real** con health status
+- ✅ **1M contexto** para DeepSeek V4 Flash
+- ✅ **Sin hardcodeo** - nuevos modelos aparecen solos
+
+## Configuración alternativa
+
+Si prefieres usar variable de entorno:
 
 ```bash
-# Type check
-npm run typecheck
-
-# Test model fetching
-npm run test:models
+export OPENMODEL_API_KEY="om-tu-api-key"
 ```
+
+## ¿Qué es OpenModel?
+
+[OpenModel.ai](https://www.openmodel.ai/) es un gateway multi-modelo que te da acceso a múltiples proveedores de IA con una sola API key. Gestionas el tráfico de producción, tienes analíticas y puedes cambiar entre modelos fácilmente.
+
+---
+
+**Hecho con ❤️ para la comunidad pi**
