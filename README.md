@@ -6,41 +6,19 @@ A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects 
 
 > **Note:** This package only provides a model _provider_. It does **not** include an API key. You must bring your own OpenModel API key.
 
-## Install
+## Install + Quick start
 
 ```sh
 pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
 ```
 
-Then reload pi:
+| Step | What to do |
+|------|------------|
+| 1️⃣ | `/login` → "Use a subscription" → **OpenModel** → "Paste API key manually" → pega tu key |
+| 2️⃣ | `/reload` (para que aparezcan los modelos) |
+| 3️⃣ | `Ctrl + L` o `/model openmodel/deepseek-v4-flash` para seleccionar tu modelo |
 
-```txt
-/reload
-```
-
-## Quick start
-
-1. **Install**
-   ```sh
-   pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
-   ```
-
-2. **Login** — paste your API key
-   ```txt
-   /login
-   ```
-   Pick: "Use a subscription" → OpenModel → "Paste API key manually" → paste your key
-
-3. **Reload** — so models appear
-   ```txt
-   /reload
-   ```
-
-4. **Select a model**
-   ```txt
-   /model openmodel/deepseek-v4-flash
-   ```
-   Or press **Ctrl + L** to browse
+¡Y listo! Ya puedes usar OpenModel en pi.
 
 ## Usage
 
