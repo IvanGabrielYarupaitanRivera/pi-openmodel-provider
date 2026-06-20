@@ -14,11 +14,11 @@ pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
 
 | Step | What to do |
 |------|------------|
-| 1️⃣ | `/login` → "Use a subscription" → **OpenModel** → "Paste API key manually" → pega tu key |
-| 2️⃣ | `/reload` (para que aparezcan los modelos) |
-| 3️⃣ | `Ctrl + L` o `/model openmodel/deepseek-v4-flash` para seleccionar tu modelo |
+| 1️⃣ | `/login` → "Use a subscription" → **OpenModel** → "Paste API key manually" → paste your key |
+| 2️⃣ | `/reload` (so models appear) |
+| 3️⃣ | `Ctrl + L` or `/model openmodel/deepseek-v4-flash` to select your model |
 
-¡Y listo! Ya puedes usar OpenModel en pi.
+Done! You can now use OpenModel in pi.
 
 ## Usage
 
