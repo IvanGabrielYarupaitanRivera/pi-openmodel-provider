@@ -20,24 +20,27 @@ Then reload pi:
 
 ## Quick start
 
-1. **Login**
+1. **Install**
+   ```sh
+   pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
+   ```
+
+2. **Login** — paste your API key
    ```txt
    /login
    ```
-   → Select **"Use a subscription"**
-   → Select **OpenModel** from the provider list
-   → Select **"Paste API key manually"**
-   → Go to [console.openmodel.ai](https://console.openmodel.ai), create an API key and paste it
+   Pick: "Use a subscription" → OpenModel → "Paste API key manually" → paste your key
 
-2. **Reload** (so models appear)
+3. **Reload** — so models appear
    ```txt
    /reload
    ```
 
-3. **Select model** (press `Ctrl + L` or `/model`)
+4. **Select a model**
    ```txt
    /model openmodel/deepseek-v4-flash
    ```
+   Or press **Ctrl + L** to browse
 
 ## Usage
 
@@ -96,6 +99,28 @@ OpenModel does not yet expose model pricing through its Provider API. The provid
 /openmodel                Show provider status
 /openmodel-stability      Show health metrics for all models
 /openmodel-stability <model>  Show detailed metrics for a specific model
+```
+
+## Stability explained
+
+The `/openmodel-stability` command shows how healthy each model is:
+
+| Symbol | Meaning | Condition |
+|--------|---------|-----------|
+| ✅ Operational | Healthy | ≥99.9% success + enough data |
+| 🟢 Healthy | Good | ≥99% success |
+| 🟡 Degraded | Some issues | ≥95% success |
+| 🔴 Unstable | Problems | <95% success |
+| ⚪ No Data | Not enough info | <10 requests (low confidence) |
+
+```
+✅ deepseek-v4-flash  100.0%   8541ms   136.4 t/s
+   ↑         ↑          ↑        ↑          ↑
+   |         |          |        |          └── Tokens per second
+   |         |          |        └── Average latency (ms)
+   |         |          └── Success rate
+   |         └── Model name
+   └── Health status
 ```
 
 ## Development
