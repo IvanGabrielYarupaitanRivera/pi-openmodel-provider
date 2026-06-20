@@ -3,6 +3,10 @@
  *
  * Fetches available models from OpenModel's API endpoint
  * and maps them to pi provider model definitions.
+ *
+ * Rather than hardcoding per-model metadata, we infer capabilities
+ * from the provider (owned_by) and model name patterns. This way
+ * new models added by OpenModel are automatically supported.
  */
 
 export const DEFAULT_MODELS_URL = "https://api.openmodel.ai/v1/models"
@@ -38,19 +42,138 @@ export interface OpenModelProviderModel {
   api: "anthropic-messages" | "openai-responses" | "google-generative-ai"
 }
 
-/** Known pricing for models we recognize */
-const KNOWN_PRICING: Record<string, { input: number; output: number }> = {
-  // Anthropic
+// ---------------------------------------------------------------------------
+// Provider-level defaults based on owned_by
+// ---------------------------------------------------------------------------
+
+interface ProviderDefaults {
+  contextWindow: number
+  maxTokens: number
+  reasoning: boolean
+  supportsImages: boolean
+  costPerMInput: number   // $ per million input tokens
+  costPerMOutput: number  // $ per million output tokens
+}
+
+const PROVIDER_DEFAULTS: Record<string, ProviderDefaults> = {
+  anthropic: {
+    contextWindow: 200_000,
+    maxTokens: 8_192,
+    reasoning: true,
+    supportsImages: true,
+    costPerMInput: 3,
+    costPerMOutput: 15,
+  },
+  deepseek: {
+    contextWindow: 1_000_000,
+    maxTokens: 65_536,
+    reasoning: true,
+    supportsImages: false,
+    costPerMInput: 0.14,
+    costPerMOutput: 0.28,
+  },
+  openai: {
+    contextWindow: 128_000,
+    maxTokens: 16_384,
+    reasoning: true,
+    supportsImages: true,
+    costPerMInput: 2.5,
+    costPerMOutput: 10,
+  },
+  gemini: {
+    contextWindow: 1_000_000,
+    maxTokens: 8_192,
+    reasoning: true,
+    supportsImages: true,
+    costPerMInput: 0.30,
+    costPerMOutput: 1.20,
+  },
+  moonshot: {
+    contextWindow: 128_000,
+    maxTokens: 65_536,
+    reasoning: true,
+    supportsImages: true,
+    costPerMInput: 0.60,
+    costPerMOutput: 3,
+  },
+  zai: {
+    contextWindow: 128_000,
+    maxTokens: 16_384,
+    reasoning: true,
+    supportsImages: false,
+    costPerMInput: 1,
+    costPerMOutput: 3.20,
+  },
+  dashscope: {
+    contextWindow: 131_072,
+    maxTokens: 16_384,
+    reasoning: true,
+    supportsImages: true,
+    costPerMInput: 0.50,
+    costPerMOutput: 3,
+  },
+  minimax: {
+    contextWindow: 128_000,
+    maxTokens: 16_384,
+    reasoning: true,
+    supportsImages: false,
+    costPerMInput: 0.27,
+    costPerMOutput: 0.95,
+  },
+  mimo: {
+    contextWindow: 128_000,
+    maxTokens: 16_384,
+    reasoning: true,
+    supportsImages: false,
+    costPerMInput: 0,
+    costPerMOutput: 0,
+  },
+}
+
+const DEFAULT_FALLBACK: ProviderDefaults = {
+  contextWindow: 128_000,
+  maxTokens: 16_384,
+  reasoning: true,
+  supportsImages: false,
+  costPerMInput: 0,
+  costPerMOutput: 0,
+}
+
+function getDefaults(ownedBy: string): ProviderDefaults {
+  return PROVIDER_DEFAULTS[ownedBy.toLowerCase()] ?? DEFAULT_FALLBACK
+}
+
+// ---------------------------------------------------------------------------
+// Model-specific overrides for well-known exceptions
+// ---------------------------------------------------------------------------
+
+/** Fine-tune contextWindow for specific model IDs that differ from their provider default */
+const CONTEXT_OVERRIDES: Record<string, number> = {
+  // Some older/smaller models have less context
+}
+
+/** Fine-tune maxTokens for specific model IDs */
+const MAX_TOKENS_OVERRIDES: Record<string, number> = {
+  // e.g., "some-small-model": 4096,
+}
+
+/** Fine-tune reasoning for specific model IDs */
+const REASONING_OVERRIDES: Record<string, boolean> = {
+  "gpt-5.4-mini": false,
+  "gemini-3.1-flash-lite-preview": false,
+  "gemini-3-flash-preview": false,
+}
+
+/** Known pricing exceptions (model-specific overrides to provider defaults) */
+const PRICING_OVERRIDES: Record<string, { input: number; output: number }> = {
   "claude-opus-4-7":    { input: 15, output: 75 },
   "claude-opus-4-6":    { input: 15, output: 75 },
   "claude-opus-4-8":    { input: 15, output: 75 },
   "claude-sonnet-4-5":  { input: 3, output: 15 },
   "claude-sonnet-4-6":  { input: 3, output: 15 },
   "claude-haiku-4-5-20251001": { input: 0.25, output: 1.25 },
-  // DeepSeek
   "deepseek-v4-pro":    { input: 0.435, output: 0.87 },
   "deepseek-v4-flash":  { input: 0.14, output: 0.28 },
-  // OpenAI
   "gpt-5.5-pro":        { input: 10, output: 40 },
   "gpt-5.5":            { input: 5, output: 20 },
   "gpt-5.4-pro":        { input: 5, output: 20 },
@@ -59,81 +182,33 @@ const KNOWN_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-5.3-codex":      { input: 2, output: 8 },
   "gpt-5.2-pro":        { input: 5, output: 20 },
   "gpt-5.2":            { input: 2, output: 8 },
-  // Google
   "gemini-3.5-flash":   { input: 0.30, output: 1.20 },
   "gemini-3.1-pro-preview": { input: 1.50, output: 6.00 },
   "gemini-3-flash-preview": { input: 0.15, output: 0.60 },
-  // Moonshot / Kimi
   "kimi-k2.6":          { input: 0.95, output: 4 },
   "kimi-k2.5":          { input: 0.60, output: 3 },
   "kimi-k2.7-code":     { input: 0.95, output: 4 },
-  // ZAI / GLM
   "glm-5.2":            { input: 1.40, output: 5.60 },
   "glm-5.1":            { input: 1.40, output: 4.40 },
   "glm-5":              { input: 1, output: 3.20 },
   "glm-4.7":            { input: 0.50, output: 2 },
-  // DashScope / Qwen
   "qwen3.7-max":        { input: 2, output: 6 },
   "qwen3.6-max-preview":{ input: 1.30, output: 7.80 },
   "qwen3.6-plus":       { input: 0.50, output: 3 },
   "qwen3.6-flash":      { input: 0.20, output: 1 },
   "qwen3.5-plus":       { input: 0.50, output: 3 },
   "qwen3-max":          { input: 2.50, output: 6 },
-  // MiniMax
   "MiniMax-M3":         { input: 0.50, output: 2 },
   "MiniMax-M2.7":       { input: 0.30, output: 1.20 },
   "MiniMax-M2.5":       { input: 0.27, output: 0.95 },
-  // Xiaomi / MiMo
-  "mimo-v2.5-pro":      { input: 0, output: 0 },
-  "mimo-v2.5":          { input: 0, output: 0 },
-  "mimo-v2-pro":        { input: 0, output: 0 },
-  "mimo-v2-omni":       { input: 0, output: 0 },
-  "mimo-v2-flash":      { input: 0, output: 0 },
 }
 
-/** Default context windows by model family */
-function guessContextWindow(id: string): number {
-  if (/claude|sonnet|opus|haiku/i.test(id)) return 200_000
-  if (/gemini/i.test(id)) return 1_000_000
-  if (/deepseek/i.test(id)) return 1_000_000
-  if (/gpt-5/i.test(id)) return 128_000
-  if (/kimi/i.test(id)) return 128_000
-  if (/qwen/i.test(id)) return 131_072
-  if (/glm/i.test(id)) return 128_000
-  if (/MiniMax/i.test(id)) return 128_000
-  if (/mimo/i.test(id)) return 128_000
-  if (/gpt/i.test(id)) return 128_000
-  return 128_000
-}
-
-/** Default max output tokens */
-function guessMaxTokens(id: string): number {
-  if (/gemini/i.test(id)) return 8_192
-  if (/kimi/i.test(id)) return 65_536
-  return 16_384
-}
-
-/** Determine if model supports reasoning/thinking */
-function guessReasoning(id: string, owned_by: string): boolean {
-  // Most models support reasoning
-  if (/gemini.*flash.*lite/i.test(id)) return false
-  if (/gpt.*mini/i.test(id)) return false
-  return true
-}
-
-/** Determine if model supports images */
-function supportsImages(id: string, owned_by: string): boolean {
-  if (/claude|sonnet|opus|haiku/i.test(id)) return true
-  if (/gemini/i.test(id)) return true
-  if (/gpt/i.test(id)) return true
-  if (/qwen/i.test(id)) return true
-  if (/kimi/i.test(id)) return true
-  return false
-}
+// ---------------------------------------------------------------------------
+// Mapping
+// ---------------------------------------------------------------------------
 
 /** Map OpenModel protocol to pi API type */
 function protocolToApi(protocols: SupportedProtocol[]): "anthropic-messages" | "openai-responses" | "google-generative-ai" | null {
-  // Prioritize: messages > responses > gemini
   if (protocols.includes("messages")) return "anthropic-messages"
   if (protocols.includes("responses")) return "openai-responses"
   if (protocols.includes("gemini")) return "google-generative-ai"
@@ -145,22 +220,25 @@ function parseApiModel(raw: OpenModelApiModel): OpenModelProviderModel | null {
   const api = protocolToApi(raw.supported_protocols)
   if (!api) return null // skip image-only models
 
-  const pricing = KNOWN_PRICING[raw.id] ?? { input: 0, output: 0 }
-  const id = raw.id
+  const defaults = getDefaults(raw.owned_by)
+  const pricing = PRICING_OVERRIDES[raw.id] ?? {
+    input: defaults.costPerMInput,
+    output: defaults.costPerMOutput,
+  }
 
   return {
-    id,
-    name: `${id} (OpenModel)`,
-    reasoning: guessReasoning(id, raw.owned_by),
-    input: supportsImages(id, raw.owned_by) ? ["text", "image"] as const : ["text"] as const,
+    id: raw.id,
+    name: raw.id,
+    reasoning: REASONING_OVERRIDES[raw.id] ?? defaults.reasoning,
+    input: defaults.supportsImages ? ["text", "image"] as const : ["text"] as const,
     cost: {
       input: pricing.input,
       output: pricing.output,
       cacheRead: pricing.input * 0.1,
       cacheWrite: pricing.input * 0.25,
     },
-    contextWindow: guessContextWindow(id),
-    maxTokens: guessMaxTokens(id),
+    contextWindow: CONTEXT_OVERRIDES[raw.id] ?? defaults.contextWindow,
+    maxTokens: MAX_TOKENS_OVERRIDES[raw.id] ?? defaults.maxTokens,
     api,
   }
 }
@@ -206,6 +284,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     apiKey: key ?? undefined,
   })
   for (const m of models) {
-    console.log(`${m.id}  [${m.api}]  ${m.input.join("+")}  ctx=${m.contextWindow}  $${m.cost.input}/${m.cost.output}`)
+    console.log(
+      `${m.id.padEnd(30)} ` +
+      `${m.api.padEnd(22)} ` +
+      `${m.input.join("+").padEnd(8)} ` +
+      `ctx=${String(m.contextWindow).padStart(7)} ` +
+      `max=${String(m.maxTokens).padStart(5)} ` +
+      `\$${m.cost.input.toFixed(3)}/\$${m.cost.output.toFixed(3)}`,
+    )
   }
 }
