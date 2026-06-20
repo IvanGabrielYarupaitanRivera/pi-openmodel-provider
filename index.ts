@@ -5,7 +5,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { login, refreshToken, getApiKey } from "./src/auth.js";
-import { getApiKey as getAuthApiKey } from "@earendil-works/pi-ai";
 import { fetchOpenModelModels } from "./src/models.js";
 
 export default async function (pi: ExtensionAPI) {
@@ -29,7 +28,7 @@ pi.on("session_start", async (_event, ctx) => {
     // Wait for auth to be configured
     let apiKey = process.env.OPENMODEL_API_KEY;
     if (!apiKey) {
-      // Try to get from auth.json
+      // Try to read from auth.json
       try {
         const auth = require("fs").readFileSync("/c/Users/Admin/.pi/agent/auth.json", "utf8");
         const authData = JSON.parse(auth);
@@ -40,8 +39,8 @@ pi.on("session_start", async (_event, ctx) => {
     }
 
     if (!apiKey) {
-      console.log("[OpenModel] API key not configured yet")
-      return
+      console.log("[OpenModel] API key not configured yet");
+      return;
     }
 
     const models = await fetchOpenModelModels();
