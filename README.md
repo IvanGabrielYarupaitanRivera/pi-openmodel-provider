@@ -9,7 +9,7 @@ A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects 
 ## Install + Quick start
 
 ```sh
-pi install git:github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider
+pi install npm:pi-openmodel-provider
 ```
 
 | Step | What to do |
