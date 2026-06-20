@@ -2,7 +2,7 @@
 
 ## Prerelease Checklist
 
-- [ ] Update version in `package.json`
+- [ ] Update version in `package.json` (e.g. `0.2.0`)
 - [ ] Update `CHANGELOG.md` with new version and changes
 - [ ] Update README.md if there are breaking changes or new features
 - [ ] Run type checking: `npm run typecheck`
@@ -29,10 +29,10 @@ cat > package.json << 'EOF'
 EOF
 
 # Install the local package
-npm install C:/Users/Admin/pi-openmodel-provider
+npm install /path/to/pi-openmodel-provider
 
 # Test installation
-pi install test-openmodel
+pi install npm:test-openmodel
 ```
 
 ## Stable Publish
@@ -43,16 +43,20 @@ npm run typecheck
 npm run test:models
 
 # Push to GitHub
-git push origin main
+git push origin master
 
-# Create release on GitHub (triggers npm publish)
+# Create release on GitHub
+# Go to https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/new
+# Tag: v0.2.0
+# Title: v0.2.0
+# Description: Copy relevant CHANGELOG entries
 ```
 
 ## GitHub Follow-up Checklist
 
-- [ ] Verify npm package is published
-- [ ] Update GitHub release notes
-- [ ] Add release badge to README
+- [ ] Verify git tag is created
+- [ ] Update GitHub release notes with CHANGELOG content
+- [ ] Add release badge to README (if applicable)
 - [ ] Announce on relevant channels (if applicable)
 - [ ] Monitor for issues
 

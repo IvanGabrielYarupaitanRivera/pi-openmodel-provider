@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-20
+
+### Added
+- Async factory pattern (same as pi-commandcode-provider)
+- API key auto-detection from pi's auth.json
+- Debug logs for model loading process
+- Windows path support for auth.json
+
+### Changed
+- Rewrote extension to match Command Code provider architecture
+- Removed all event hooks (session_start, before_agent_start)
+- Simplified to pure async factory function
+- Improved auth.json reading with error handling
+- Updated auth.json path for Windows compatibility
+
+### Fixed
+- All TypeScript errors (no `any`, proper types, `@types/node`)
+- `node:fs` import instead of bare `fs`
+- `allowImportingTsExtensions` in tsconfig
+- `.ts` extension imports working correctly
+- auth.json path resolution
+
 ## [0.1.0] - 2026-06-20
 
 ### Added
@@ -28,4 +50,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import path extensions (.ts → .js)
 - Process import in models.ts
 
+[0.2.0]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.2.0
 [0.1.0]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.1.0
