@@ -22,6 +22,7 @@ interface OpenModelApiModel {
   created: number
   owned_by: string
   supported_protocols: SupportedProtocol[]
+  supported_apis?: SupportedProtocol[]  // alt name from docs
 }
 
 /** OpenModel API response shape */
@@ -217,7 +218,9 @@ function protocolToApi(protocols: SupportedProtocol[]): "anthropic-messages" | "
 
 /** Parse raw API model into pi provider model */
 function parseApiModel(raw: OpenModelApiModel): OpenModelProviderModel | null {
-  const api = protocolToApi(raw.supported_protocols)
+  // Accept both supported_protocols (API) and supported_apis (doc) field names
+  const protocols = raw.supported_protocols ?? raw.supported_apis ?? []
+  const api = protocolToApi(protocols)
   if (!api) return null // skip image-only models
 
   const defaults = getDefaults(raw.owned_by)
