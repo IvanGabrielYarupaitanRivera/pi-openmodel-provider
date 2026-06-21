@@ -38,7 +38,8 @@
     "test:models": "tsx tests/test-models.ts",
     "test:auth": "tsx tests/test-auth.ts",
     "test:pricing": "tsx tests/test-pricing.ts",
-    "test": "tsx tests/test-models.ts && tsx tests/test-auth.ts && tsx tests/test-pricing.ts"
+    "test:stability": "tsx tests/test-stability.ts",
+    "test": "tsx tests/test-models.ts && tsx tests/test-auth.ts && tsx tests/test-pricing.ts && tsx tests/test-stability.ts"
   },
   "pi": {
     "extensions": [
