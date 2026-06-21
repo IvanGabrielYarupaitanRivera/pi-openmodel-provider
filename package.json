@@ -20,6 +20,8 @@
     "index.ts",
     "src/",
     "src/stub.d.ts",
+    "AGENTS.md",
+    ".agents/",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
