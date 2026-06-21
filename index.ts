@@ -12,29 +12,14 @@ import {
   fetchModelStabilityDetail,
   formatHealthStatus,
 } from "./src/stability.ts"
-import { readFileSync } from "node:fs"
-
-function getApiKeyFromAuth(): string | null {
-  try {
-    const authPath = "C:/Users/Admin/.pi/agent/auth.json"
-    const content = readFileSync(authPath, "utf-8")
-    const data = JSON.parse(content)
-    return data.openmodel?.access || data.openmodel?.refresh || null
-  } catch {
-    return null
-  }
-}
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
-  const apiKey = getApiKeyFromAuth()
 
-  if (apiKey) {
-    try {
-      models = await fetchOpenModelModels({ apiKey })
-    } catch {
-      // Models will load after API key is configured
-    }
+  try {
+    models = await fetchOpenModelModels()
+  } catch {
+    // Models will be retried on next session
   }
 
   pi.registerProvider("openmodel", {
@@ -64,9 +49,8 @@ export default async function (pi: ExtensionAPI) {
   pi.registerCommand("openmodel", {
     description: "Show OpenModel provider status",
     handler: async (_args: string, ctx: any) => {
-      const key = getApiKeyFromAuth()
-      const status = key ? "✅ Configured" : "❌ Not configured"
       const count = models.length
+      const status = count > 0 ? `✅ ${count} models loaded` : "❌ No models loaded"
 
       const lines = [
         "╔════════════════════════════════╗",

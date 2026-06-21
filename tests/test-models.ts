@@ -1,121 +1,173 @@
 import assert from "node:assert/strict"
-import { describe, it } from "node:test"
+import { describe, it, mock } from "node:test"
 
-import { parseApiModel } from "../src/models.ts"
-import type { OpenModelApiModel } from "../src/models.ts"
+import { fetchOpenModelModels } from "../src/models.ts"
 
-describe("parseApiModel()", () => {
-  it("converts a DeepSeek model correctly", () => {
-    const input: OpenModelApiModel = {
-      id: "deepseek-v4-flash",
-      object: "model",
-      created: 1778315466,
-      owned_by: "deepseek",
-      supported_protocols: ["messages"],
-    }
+const MOCK_WEB_PAGE_1 = {
+  success: true,
+  meta: { pagination: { page: 1, pageSize: 20, total: 2, totalPages: 1 } },
+  data: [
+    {
+      key: "deepseek-v4-flash",
+      provider_key: "deepseek",
+      provider_name: "DeepSeek",
+      prices: {
+        input_cost_per_token: 1.4e-7,
+        output_cost_per_token: 2.8e-7,
+        cache_read_input_token_cost: 2.8e-8,
+        cache_creation_input_token_cost: 2.8e-8,
+      },
+      max: { max_input_tokens: 1_000_000, max_output_tokens: 65536, max_tokens: 65536 },
+      supports: { supports_reasoning: true, supports_vision: false },
+      price_multiplier: 1,
+    },
+    {
+      key: "claude-sonnet-4-6",
+      provider_key: "anthropic",
+      provider_name: "Anthropic",
+      prices: {
+        input_cost_per_token: 3e-6,
+        output_cost_per_token: 1.5e-5,
+        cache_read_input_token_cost: 3e-7,
+        cache_creation_input_token_cost: 3.75e-6,
+      },
+      max: { max_input_tokens: 200_000, max_output_tokens: 8192, max_tokens: 8192 },
+      supports: { supports_reasoning: true, supports_vision: true },
+      price_multiplier: 1,
+    },
+  ],
+}
 
-    const result = parseApiModel(input)
-    assert.ok(result, "should parse successfully")
-    assert.equal(result.id, "deepseek-v4-flash")
-    assert.equal(result.api, "anthropic-messages")
-    assert.equal(result.contextWindow, 1_000_000)
-    assert.equal(result.maxTokens, 65_536)
-    assert.equal(result.reasoning, true)
-    assert.deepEqual(result.input, ["text"])
+const MOCK_LEGACY = {
+  data: [
+    { id: "deepseek-v4-flash", object: "model", created: 0, owned_by: "deepseek", supported_protocols: ["messages"] },
+    { id: "claude-sonnet-4-6", object: "model", created: 0, owned_by: "anthropic", supported_protocols: ["messages"] },
+  ],
+  object: "list",
+}
+
+describe("fetchOpenModelModels()", () => {
+  it("fetches and parses models from the API", async () => {
+    let webCallCount = 0
+
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        webCallCount++
+        return { ok: true, json: async () => MOCK_WEB_PAGE_1 }
+      }
+      if ((url as string).includes("/v1/models")) {
+        return { ok: true, json: async () => MOCK_LEGACY }
+      }
+      return { ok: false, json: async () => ({}) }
+    }) as unknown as typeof fetch
+
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+
+    assert.equal(models.length, 2)
+    assert.equal(webCallCount, 1)
   })
 
-  it("converts an Anthropic model with images", () => {
-    const input: OpenModelApiModel = {
-      id: "claude-sonnet-4-6",
-      object: "model",
-      created: 1778212220,
-      owned_by: "anthropic",
-      supported_protocols: ["messages"],
-    }
+  it("parses DeepSeek V4 Flash correctly", async () => {
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        return { ok: true, json: async () => MOCK_WEB_PAGE_1 }
+      }
+      return { ok: true, json: async () => MOCK_LEGACY }
+    }) as unknown as typeof fetch
 
-    const result = parseApiModel(input)
-    assert.ok(result)
-    assert.equal(result.id, "claude-sonnet-4-6")
-    assert.equal(result.api, "anthropic-messages")
-    assert.equal(result.contextWindow, 200_000)
-    assert.equal(result.reasoning, true)
-    assert.deepEqual(result.input, ["text", "image"])
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+    const ds = models.find((m) => m.id === "deepseek-v4-flash")
+
+    assert.ok(ds)
+    assert.equal(ds.api, "anthropic-messages")
+    assert.equal(ds.contextWindow, 1_000_000)
+    assert.equal(ds.maxTokens, 65_536)
+    assert.equal(ds.reasoning, true)
+    assert.deepEqual(ds.input, ["text"])
+    // Prices: 1.4e-7 * 1M = 0.14, 2.8e-7 * 1M = 0.28
+    assert.equal(ds.cost.input, 0.14)
+    assert.equal(ds.cost.output, 0.28)
   })
 
-  it("converts a Gemini model", () => {
-    const input: OpenModelApiModel = {
-      id: "gemini-3.5-flash",
-      object: "model",
-      created: 1779253516,
-      owned_by: "gemini",
-      supported_protocols: ["gemini"],
-    }
+  it("parses Anthropic model with images", async () => {
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        return { ok: true, json: async () => MOCK_WEB_PAGE_1 }
+      }
+      return { ok: true, json: async () => MOCK_LEGACY }
+    }) as unknown as typeof fetch
 
-    const result = parseApiModel(input)
-    assert.ok(result)
-    assert.equal(result.id, "gemini-3.5-flash")
-    assert.equal(result.api, "google-generative-ai")
-    assert.equal(result.contextWindow, 1_000_000)
-    assert.deepEqual(result.input, ["text", "image"])
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+    const claude = models.find((m) => m.id === "claude-sonnet-4-6")
+
+    assert.ok(claude)
+    assert.equal(claude.api, "anthropic-messages")
+    assert.equal(claude.contextWindow, 200_000)
+    assert.equal(claude.reasoning, true)
+    assert.deepEqual(claude.input, ["text", "image"])
+    assert.equal(claude.cost.input, 3)
+    assert.equal(claude.cost.output, 15)
   })
 
-  it("converts an OpenAI model", () => {
-    const input: OpenModelApiModel = {
-      id: "gpt-5.4-mini",
-      object: "model",
-      created: 1778212187,
-      owned_by: "openai",
-      supported_protocols: ["responses"],
+  it("skips image-only models", async () => {
+    const webData = {
+      success: true,
+      meta: { pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 } },
+      data: [{
+        key: "dall-e-3",
+        provider_key: "openai",
+        provider_name: "OpenAI",
+        prices: { input_cost_per_image: 0.04 },
+        max: {},
+        supports: { supports_image_generation: true, supports_vision: false, supports_reasoning: false },
+        price_multiplier: 1,
+      }],
     }
 
-    const result = parseApiModel(input)
-    assert.ok(result)
-    assert.equal(result.id, "gpt-5.4-mini")
-    assert.equal(result.api, "openai-responses")
-    assert.equal(result.contextWindow, 128_000)
-    assert.equal(result.reasoning, false) // mini models don't support reasoning
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        return { ok: true, json: async () => webData }
+      }
+      return { ok: true, json: async () => ({ data: [], object: "list" }) }
+    }) as unknown as typeof fetch
+
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+    assert.equal(models.length, 0)
   })
 
-  it("converts a DashScope model with dual protocols", () => {
-    const input: OpenModelApiModel = {
-      id: "qwen3.7-max",
-      object: "model",
-      created: 1780321625,
-      owned_by: "dashscope",
-      supported_protocols: ["messages", "responses"],
-    }
+  it("handles pagination across multiple pages", async () => {
+    let callCount = 0
 
-    const result = parseApiModel(input)
-    assert.ok(result)
-    assert.equal(result.id, "qwen3.7-max")
-    // Should prefer messages over responses
-    assert.equal(result.api, "anthropic-messages")
-    assert.deepEqual(result.input, ["text", "image"])
-  })
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        callCount++
+        const urlStr = url as string
+        const page = urlStr.includes("page=2") ? 2 : 1
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            meta: { pagination: { page, pageSize: 1, total: 2, totalPages: 2 } },
+            data: page === 1
+              ? [{ key: "model-a", provider_key: "deepseek", provider_name: "DeepSeek", prices: {}, max: {}, supports: {}, price_multiplier: 1 }]
+              : [{ key: "model-b", provider_key: "deepseek", provider_name: "DeepSeek", prices: {}, max: {}, supports: {}, price_multiplier: 1 }],
+          }),
+        }
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          data: [
+            { id: "model-a", object: "model", created: 0, owned_by: "deepseek", supported_protocols: ["messages"] },
+            { id: "model-b", object: "model", created: 0, owned_by: "deepseek", supported_protocols: ["messages"] },
+          ],
+          object: "list",
+        }),
+      }
+    }) as unknown as typeof fetch
 
-  it("skips image-only models", () => {
-    const input: OpenModelApiModel = {
-      id: "1024-x-1024/gpt-image-1.5",
-      object: "model",
-      created: 1781680144,
-      owned_by: "openai",
-      supported_protocols: ["images"],
-    }
-
-    const result = parseApiModel(input)
-    assert.equal(result, null)
-  })
-
-  it("rejects unexpected API shapes", () => {
-    const input = {
-      id: "test",
-      object: "model",
-      created: 0,
-      owned_by: "unknown",
-      supported_protocols: ["weird-protocol"],
-    } as any
-
-    const result = parseApiModel(input)
-    assert.equal(result, null)
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+    assert.equal(models.length, 2)
+    assert.equal(callCount, 2)
   })
 })
