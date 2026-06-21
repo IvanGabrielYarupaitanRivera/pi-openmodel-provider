@@ -14,6 +14,8 @@ pi install npm:pi-openmodel-provider
 
 ![pi-openmodel-provider thumbnail](https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg)
 
+[▶️ Watch video tutorial](https://youtu.be/aUaXznGVuzg)
+
 | Step | What to do |
 |------|------------|
 | 1️⃣ | `/reload` (so OpenModel appears in /login) |

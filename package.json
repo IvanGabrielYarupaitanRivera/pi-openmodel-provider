@@ -44,7 +44,8 @@
     "skills": [
       "./.agents/skills"
     ],
-    "image": "https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg"
+    "image": "https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg",
+    "video": "https://youtu.be/aUaXznGVuzg"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "^0.75.5"
