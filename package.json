@@ -22,6 +22,7 @@
     "src/stub.d.ts",
     "AGENTS.md",
     ".agents/",
+    "media/",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -42,7 +43,8 @@
     ],
     "skills": [
       "./.agents/skills"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "^0.75.5"

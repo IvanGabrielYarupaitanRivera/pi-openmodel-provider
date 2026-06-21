@@ -12,6 +12,8 @@ A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects 
 pi install npm:pi-openmodel-provider
 ```
 
+![pi-openmodel-provider thumbnail](https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg)
+
 | Step | What to do |
 |------|------------|
 | 1️⃣ | `/reload` (so OpenModel appears in /login) |
