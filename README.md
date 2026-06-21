@@ -77,7 +77,23 @@ Model pricing is fetched live from OpenModel's public API (`/web/v1/models`). Ea
 - **3 protocols**: Messages (Anthropic), Responses (OpenAI), Gemini (Google)
 - **Model stability metrics** via `/openmodel-stability`
 - **1M context window** for DeepSeek V4 models
-- **No hardcoding** — new models appear automatically
+- **Thinking levels** for reasoning models (DeepSeek, Claude, GPT, Gemini, etc.)
+- **Friendly error messages** with emojis and actionable guidance
+- **No hardcoding** — new models, pricing, and capabilities appear automatically
+
+## Error handling
+
+Errors from OpenModel's API are shown with friendly messages:
+
+| HTTP Status | What you'll see |
+|-------------|-----------------|
+| 401 | 🔑 Invalid API key. Check your credentials or run /login again. |
+| 402 | 💳 Insufficient balance. Top up at console.openmodel.ai |
+| 429 | ⏳ Rate limited. Try again later. |
+| 404 | 🔍 Resource not found. Check the model name. |
+| 5xx | 🔧 OpenModel API error. Try again later. |
+
+For stability endpoints, errors include context about what went wrong.
 
 ## Commands
 

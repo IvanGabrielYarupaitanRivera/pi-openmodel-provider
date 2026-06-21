@@ -7,17 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.9] - 2026-06-20
 
+### Added
+- `src/errors.ts` with `parseWebError`, `parseProxyError`, `friendlyMessage` helpers
+- Friendly error messages for 401, 402, 404, 429, 5xx and more
+- `thinkingLevelMap` for reasoning models (Messages + Responses protocols)
+- Error handling in model discovery and stability endpoints
+- Comprehensive error handling section in README
+
 ### Changed
 - Models now fetched from two public endpoints (no auth required)
 - Pricing, context window, reasoning, and vision capabilities from real API
 - Removed all hardcoded pricing tables (PROVIDER_DEFAULTS, PRICING_OVERRIDES)
 - Simplified index.ts: removed readFileSync and auth.json reading
+- Stability errors now show specific API error codes
 - Updated all tests to use mock fetch with real API response format
 
 ### Removed
 - Hardcoded PROVIDER_DEFAULTS in src/models.ts
-- Hardcoded PRICING_OVERRIDES in src/models.ts
-- Hardcoded CONTEXT_OVERRIDES, MAX_TOKENS_OVERRIDES, REASONING_OVERRIDES
+- Hardcoded PRICING_OVERRIDES, CONTEXT_OVERRIDES, MAX_TOKENS_OVERRIDES
+- Hardcoded REASONING_OVERRIDES in src/models.ts
 - readFileSync import and getApiKeyFromAuth function from index.ts
 
 ## [0.2.6] - 2026-06-20
