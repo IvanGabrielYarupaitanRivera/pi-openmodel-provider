@@ -12,6 +12,7 @@ export interface OpenModelProviderModel {
   id: string
   name: string
   reasoning: boolean
+  thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>>
   input: readonly ("text" | "image")[]
   cost: { input: number; output: number; cacheRead: number; cacheWrite: number }
   contextWindow: number
@@ -65,6 +66,28 @@ function determineApi(protocols: string[], provider: string): "anthropic-message
   if (protocols.includes("responses")) return "openai-responses"
   if (protocols.includes("gemini")) return "google-generative-ai"
   return null
+}
+
+function thinkingLevelMapForApi(api: "anthropic-messages" | "openai-responses" | "google-generative-ai"): Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>> {
+  if (api === "anthropic-messages") {
+    return {
+      minimal: "low",
+      low: "medium",
+      medium: "high",
+      high: "high",
+      xhigh: "max",
+    }
+  }
+  if (api === "openai-responses") {
+    return {
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "high",
+    }
+  }
+  return {}
 }
 
 /** Fetch all models from the web API (public, no auth required) */
@@ -160,10 +183,12 @@ export async function fetchOpenModelModels(options?: {
     const cacheRead = pricePerMillion(web.prices.cache_read_input_token_cost as number)
     const cacheWrite = pricePerMillion(web.prices.cache_creation_input_token_cost as number)
 
-    models.push({
+    const reasoning = web.supports.supports_reasoning ?? false
+
+    const base = {
       id,
       name: id,
-      reasoning: web.supports.supports_reasoning ?? false,
+      reasoning,
       input: web.supports.supports_vision ? ["text", "image"] as const : ["text"] as const,
       cost: {
         input: inputPrice * (web.price_multiplier ?? 1),
@@ -174,7 +199,14 @@ export async function fetchOpenModelModels(options?: {
       contextWindow: web.max.max_input_tokens ?? 128_000,
       maxTokens: web.max.max_output_tokens ?? web.max.max_tokens ?? 16_384,
       api,
-    })
+    } as const
+
+    const model = {
+      ...base,
+      ...(reasoning ? { thinkingLevelMap: thinkingLevelMapForApi(api) } : {}),
+    } as unknown as OpenModelProviderModel
+
+    models.push(model)
   }
 
   return models

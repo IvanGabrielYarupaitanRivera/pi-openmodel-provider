@@ -42,16 +42,22 @@ export default async function (pi: ExtensionAPI) {
       refreshToken,
       getApiKey,
     },
-    models: models.map((model) => ({
-      id: model.id,
-      name: model.name,
-      api: model.api,
-      reasoning: model.reasoning,
-      input: model.input,
-      cost: model.cost,
-      contextWindow: model.contextWindow,
-      maxTokens: model.maxTokens,
-    })),
+    models: models.map((model) => {
+      const config: Record<string, unknown> = {
+        id: model.id,
+        name: model.name,
+        api: model.api,
+        reasoning: model.reasoning,
+        input: model.input,
+        cost: model.cost,
+        contextWindow: model.contextWindow,
+        maxTokens: model.maxTokens,
+      }
+      if (model.thinkingLevelMap) {
+        config.thinkingLevelMap = model.thinkingLevelMap
+      }
+      return config
+    }),
   })
 
   // /openmodel - Show provider status
