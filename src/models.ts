@@ -5,7 +5,9 @@
  * Pricing, context window, and capabilities are all provided by the API.
  */
 
-export const DEFAULT_WEB_MODELS_URL = "https://api.openmodel.ai/web/v1/models"
+import { parseWebError, parseProxyError, friendlyMessage } from "./errors.ts"
+
+const DEFAULT_WEB_MODELS_URL = "https://api.openmodel.ai/web/v1/models"
 export const DEFAULT_LEGACY_MODELS_URL = "https://api.openmodel.ai/v1/models"
 
 export interface OpenModelProviderModel {
@@ -108,11 +110,16 @@ async function fetchWebModels(options?: {
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch models: ${response.status}`)
+      let body: any
+      try { body = await response.json() } catch {}
+      const err = parseWebError(body)
+      throw new Error(`Failed to fetch models: ${response.status} ${err.code} — ${friendlyMessage(err.code, err.message)}`)
     }
 
     const body = (await response.json()) as WebApiResponse
-    if (!body.success) throw new Error("Failed to fetch models")
+    if (!body.success) {
+      throw new Error(`Failed to fetch models — ${friendlyMessage("INTERNAL_ERROR", "Unknown error")}`)
+    }
 
     totalPages = body.meta.pagination.totalPages
     for (const model of body.data) {
@@ -137,7 +144,10 @@ async function fetchLegacyModels(options?: {
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch models: ${response.status}`)
+    let body: any
+    try { body = await response.json() } catch {}
+    const err = parseProxyError(body)
+    throw new Error(`Failed to fetch models: ${response.status} — ${friendlyMessage(err.code, err.message)}`)
   }
 
   const body = (await response.json()) as LegacyApiResponse

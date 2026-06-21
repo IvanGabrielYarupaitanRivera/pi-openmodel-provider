@@ -9,6 +9,8 @@
  *   GET https://api.openmodel.ai/web/v1/model-stability/:modelKey
  */
 
+import { parseWebError, friendlyMessage } from "./errors.ts"
+
 export const STABILITY_SUMMARY_URL =
   "https://api.openmodel.ai/web/v1/model-stability/summary";
 
@@ -82,6 +84,13 @@ export async function fetchModelStabilitySummary(options?: {
     headers: { accept: "application/json" },
   });
 
+  if (!response.ok) {
+    let errBody: any
+    try { errBody = await response.json() } catch {}
+    const err = parseWebError(errBody)
+    throw new Error(`stability — ${friendlyMessage(err.code, err.message)}`)
+  }
+
   const body = (await response.json()) as {
     success: boolean;
     data: Array<{
@@ -93,7 +102,9 @@ export async function fetchModelStabilitySummary(options?: {
     }>;
   };
 
-  if (!body.success) throw new Error("Model stability summary request failed");
+  if (!body.success) {
+    throw new Error(`stability — ${friendlyMessage("INTERNAL_ERROR", "Summary request failed")}`)
+  }
 
   return body.data.map((item) => ({
     ...item,
@@ -118,6 +129,13 @@ export async function fetchModelStabilityDetail(
     { headers: { accept: "application/json" } },
   );
 
+  if (!response.ok) {
+    let errBody: any
+    try { errBody = await response.json() } catch {}
+    const err = parseWebError(errBody)
+    throw new Error(`stability — ${friendlyMessage(err.code, err.message)}`)
+  }
+
   const body = (await response.json()) as {
     success: boolean;
     data: {
@@ -141,8 +159,9 @@ export async function fetchModelStabilityDetail(
     };
   };
 
-  if (!body.success)
-    throw new Error(`Model stability detail request failed for ${modelKey}`);
+  if (!body.success) {
+    throw new Error(`stability — ${friendlyMessage("NOT_FOUND", `Model "${modelKey}" not found`)}`)
+  }
 
   return {
     ...body.data,

@@ -12,6 +12,7 @@ import {
   fetchModelStabilityDetail,
   formatHealthStatus,
 } from "./src/stability.ts"
+import { friendlyMessage } from "./src/errors.ts"
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
@@ -22,12 +23,8 @@ export default async function (pi: ExtensionAPI) {
   } catch (error) {
     if (error instanceof TypeError && error.message.includes("fetch")) {
       modelError = "🌐 Network error: check your internet connection"
-    } else if (error instanceof Error && error.message.includes("429")) {
-      modelError = "⏳ Rate limited by OpenModel API. Try again later."
-    } else if (error instanceof Error && error.message.includes("5")) {
-      modelError = "🔧 OpenModel API is temporarily unavailable. Try again later."
     } else {
-      modelError = "⚠️ Could not load models. The API may be temporarily unavailable."
+      modelError = `⚠️ ${error instanceof Error ? error.message : "Could not load models"}`
     }
   }
 
@@ -147,13 +144,8 @@ export default async function (pi: ExtensionAPI) {
           ctx.ui.notify(lines.join("\n"), "info")
         }
       } catch (error) {
-        if (error instanceof Error && error.message.includes("429")) {
-          ctx.ui.notify("⏳ Stability API rate limit reached. Try again later.", "warning")
-        } else if (args?.trim()) {
-          ctx.ui.notify(`❌ Model "${args.trim()}" not found in stability data.`, "error")
-        } else {
-          ctx.ui.notify("❌ Failed to fetch stability data. The API may be temporarily unavailable.", "error")
-        }
+        const msg = error instanceof Error ? error.message : "Unknown error"
+        ctx.ui.notify(`❌ ${msg}`, "error")
       }
     },
   })

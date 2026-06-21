@@ -100,7 +100,7 @@ describe("fetchModelStabilitySummary()", () => {
 
     await assert.rejects(
       () => fetchModelStabilitySummary({ fetchImpl: mockFetch }),
-      { message: "Model stability summary request failed" },
+      (err: Error) => err.message.includes("stability"),
     )
   })
 
@@ -172,7 +172,7 @@ describe("fetchModelStabilityDetail()", () => {
 
     await assert.rejects(
       () => fetchModelStabilityDetail("invalid-model", { fetchImpl: mockFetch }),
-      { message: "Model stability detail request failed for invalid-model" },
+      (err: Error) => err.message.includes("stability"),
     )
   })
 })
