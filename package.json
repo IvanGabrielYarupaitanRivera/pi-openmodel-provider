@@ -35,7 +35,10 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test:models": "tsx src/models.ts"
+    "test:models": "tsx tests/test-models.ts",
+    "test:auth": "tsx tests/test-auth.ts",
+    "test:pricing": "tsx tests/test-pricing.ts",
+    "test": "tsx tests/test-models.ts && tsx tests/test-auth.ts && tsx tests/test-pricing.ts"
   },
   "pi": {
     "extensions": [

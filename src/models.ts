@@ -13,10 +13,10 @@ export const DEFAULT_MODELS_URL = "https://api.openmodel.ai/v1/models";
 export const DEFAULT_API_BASE = "https://api.openmodel.ai";
 
 /** Supported protocols from OpenModel API */
-type SupportedProtocol = "messages" | "responses" | "gemini" | "images";
+export type SupportedProtocol = "messages" | "responses" | "gemini" | "images";
 
 /** Raw model from OpenModel API response */
-interface OpenModelApiModel {
+export interface OpenModelApiModel {
   id: string;
   object: string;
   created: number;
@@ -224,7 +224,7 @@ function protocolToApi(
 }
 
 /** Parse raw API model into pi provider model */
-function parseApiModel(raw: OpenModelApiModel): OpenModelProviderModel | null {
+export function parseApiModel(raw: OpenModelApiModel): OpenModelProviderModel | null {
   // Accept both supported_protocols (API) and supported_apis (doc) field names
   const protocols = raw.supported_protocols ?? raw.supported_apis ?? [];
   const api = protocolToApi(protocols);
