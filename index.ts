@@ -1,7 +1,7 @@
 /**
  * OpenModel provider for pi.
  *
- * Models are fetched from OpenModel's API at startup.
+ * Models are fetched from OpenModel's public API at startup.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
@@ -15,11 +15,20 @@ import {
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
+  let modelError: string | null = null
 
   try {
     models = await fetchOpenModelModels()
-  } catch {
-    // Models will be retried on next session
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      modelError = "🌐 Network error: check your internet connection"
+    } else if (error instanceof Error && error.message.includes("429")) {
+      modelError = "⏳ Rate limited by OpenModel API. Try again later."
+    } else if (error instanceof Error && error.message.includes("5")) {
+      modelError = "🔧 OpenModel API is temporarily unavailable. Try again later."
+    } else {
+      modelError = "⚠️ Could not load models. The API may be temporarily unavailable."
+    }
   }
 
   pi.registerProvider("openmodel", {
@@ -50,21 +59,48 @@ export default async function (pi: ExtensionAPI) {
     description: "Show OpenModel provider status",
     handler: async (_args: string, ctx: any) => {
       const count = models.length
-      const status = count > 0 ? `✅ ${count} models loaded` : "❌ No models loaded"
+      const status = count > 0
+        ? `✅ ${count} models loaded`
+        : modelError ?? "❌ No models loaded"
+
+      // Detect if user has configured an API key in auth.json
+      let hasApiKey = false
+      try {
+        const { readFileSync } = await import("node:fs")
+        const authPath = `${require("node:os").homedir()}/.pi/agent/auth.json`
+        const content = readFileSync(authPath, "utf-8")
+        const data = JSON.parse(content)
+        hasApiKey = !!(data.openmodel?.access || data.openmodel?.refresh)
+      } catch {
+        // Auth file not found
+      }
 
       const lines = [
-        "╔════════════════════════════════╗",
-        "║        OpenModel.ai            ║",
-        "╠════════════════════════════════╣",
-        `║  Status: ${status.padEnd(20)}║`,
-        `║  Models: ${String(count).padStart(3)} available           ║`,
-        "╠════════════════════════════════╣",
-        "║  Commands:                     ║",
-        "║  /model openmodel/...          ║",
-        "║  /openmodel-stability          ║",
-        "╚════════════════════════════════╝",
+        "╔══════════════════════════════════╗",
+        "║        OpenModel.ai              ║",
+        "╠══════════════════════════════════╣",
+        `║  Models: ${String(count).padStart(3)} loaded                    ║`,
+        hasApiKey ? "║  API Key: ✅ Configured              ║" : "║  API Key: ❌ Not configured          ║",
+        "╠══════════════════════════════════╣",
+        "║  Commands:                       ║",
+        "║  /model openmodel/...            ║",
+        "║  /openmodel-stability            ║",
+        "╚══════════════════════════════════╝",
       ]
-      ctx.ui.notify(lines.join("\n"), "info")
+
+      const hints: string[] = []
+      if (!hasApiKey) {
+        hints.push("ℹ️  Run /login → OpenModel → paste your API key")
+      }
+      if (count === 0 && hasApiKey) {
+        hints.push("ℹ️  Run /reload after setting your API key")
+      }
+      if (count === 0 && modelError) {
+        hints.push(`ℹ️  ${modelError}`)
+      }
+      hints.push("ℹ️  Press Ctrl+L to select a model")
+
+      ctx.ui.notify([...lines, ...hints].join("\n"), "info")
     },
   })
 
@@ -90,7 +126,7 @@ export default async function (pi: ExtensionAPI) {
         } else {
           const summary = await fetchModelStabilitySummary()
           if (summary.length === 0) {
-            ctx.ui.notify("No stability data available.", "warning")
+            ctx.ui.notify("📊 No stability data available for any model yet.", "warning")
             return
           }
           const lines = ["📊 OpenModel Stability (24h)", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"]
@@ -104,8 +140,14 @@ export default async function (pi: ExtensionAPI) {
           }
           ctx.ui.notify(lines.join("\n"), "info")
         }
-      } catch {
-        ctx.ui.notify("Failed to fetch stability data.", "error")
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("429")) {
+          ctx.ui.notify("⏳ Stability API rate limit reached. Try again later.", "warning")
+        } else if (args?.trim()) {
+          ctx.ui.notify(`❌ Model "${args.trim()}" not found in stability data.`, "error")
+        } else {
+          ctx.ui.notify("❌ Failed to fetch stability data. The API may be temporarily unavailable.", "error")
+        }
       }
     },
   })
