@@ -1,3 +1,8 @@
+---
+name: pi-openmodel-info
+description: Learn about the pi-openmodel-provider package, its commands (/openmodel, /openmodel-stability), supported providers (OpenAI, Anthropic, DeepSeek, Gemini), and how to use OpenModel models in pi.
+---
+
 # OpenModel Provider for pi
 
 This skill describes the pi-openmodel-provider package installed in this environment.
