@@ -16,8 +16,6 @@ pi install npm:pi-openmodel-provider
 
 ![pi-openmodel-provider thumbnail](https://raw.githubusercontent.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/master/media/thumbnail.jpeg)
 
-[▶️ Watch video tutorial](https://youtu.be/aUaXznGVuzg)
-
 | Step | What to do |
 |------|------------|
 | 1️⃣ | `/reload` (so OpenModel appears in /login) |
@@ -57,18 +55,21 @@ Models are fetched live from OpenModel's API at startup, so new models show up w
 
 ## Model discovery
 
-On startup, the provider fetches:
+On startup, the provider fetches models from two public endpoints (no authentication required):
 
-```txt
-https://api.openmodel.ai/v1/models
-```
+- **Model list & protocols:** `https://api.openmodel.ai/v1/models`
+- **Pricing & capabilities:** `https://api.openmodel.ai/web/v1/models`
+
+Pricing, context window, reasoning support, and vision capabilities are all provided by the API — no hardcoded data.
 
 ## Pricing
 
-OpenModel does not yet expose model pricing through its Provider API. The provider ships a static cost table (`PROVIDER_DEFAULTS` and `PRICING_OVERRIDES` in `src/models.ts`) for known models so that pi can display per-model pricing.
+Model pricing is fetched live from OpenModel's public API (`/web/v1/models`). Each model returns its real per-token rates in microdollars, converted to dollars per million tokens for display.
 
-- Models present in the provider defaults show their estimated per-million-token rates.
-- Models **not** in the table fall back to zero cost.
+- Input and output tokens are billed at separate rates
+- Cache reads and writes are billed at reduced rates
+- A `price_multiplier` may apply (e.g., 0.95 = 5% discount)
+- Free models have zero cost
 
 ## Features
 
@@ -121,8 +122,14 @@ npm install
 # Type check
 npm run typecheck
 
-# Test model fetching
+# Run all tests
+npm test
+
+# Run specific tests
 npm run test:models
+npm run test:auth
+npm run test:pricing
+npm run test:stability
 ```
 
 ## Contributing

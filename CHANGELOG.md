@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-06-20
+
+### Changed
+- Models now fetched from two public endpoints (no auth required)
+- Pricing, context window, reasoning, and vision capabilities from real API
+- Removed all hardcoded pricing tables (PROVIDER_DEFAULTS, PRICING_OVERRIDES)
+- Simplified index.ts: removed readFileSync and auth.json reading
+- Updated all tests to use mock fetch with real API response format
+
+### Removed
+- Hardcoded PROVIDER_DEFAULTS in src/models.ts
+- Hardcoded PRICING_OVERRIDES in src/models.ts
+- Hardcoded CONTEXT_OVERRIDES, MAX_TOKENS_OVERRIDES, REASONING_OVERRIDES
+- readFileSync import and getApiKeyFromAuth function from index.ts
+
 ## [0.2.6] - 2026-06-20
 
 ### Fixed
@@ -86,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import path extensions (.ts → .js)
 - Process import in models.ts
 
+[0.2.9]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.2.9
 [0.2.6]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.2.6
 [0.2.5]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.2.5
 [0.2.4]: https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/releases/tag/v0.2.4
