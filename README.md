@@ -6,6 +6,8 @@ A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects 
 
 > **Note:** This package only provides a model _provider_. It does **not** include an API key. You must bring your own OpenModel API key.
 
+[▶️ Watch the video tutorial](https://youtu.be/aUaXznGVuzg) — See the full installation and usage walkthrough.
+
 ## Install + Quick start
 
 ```sh
