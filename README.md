@@ -2,6 +2,8 @@
 
 A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects pi to [OpenModel.ai](https://www.openmodel.ai) — a unified AI API gateway.
 
+[![npm version](https://badge.fury.io/js/pi-openmodel-provider.svg)](https://www.npmjs.com/package/pi-openmodel-provider)
+
 > **Disclaimer:** This is an unofficial, community-maintained package. I am not affiliated with, endorsed by, or connected to OpenModel in any way. This provider simply forwards requests to the public OpenModel API using your own API key.
 
 > **Note:** This package only provides a model _provider_. It does **not** include an API key. You must bring your own OpenModel API key.
