@@ -161,3 +161,7 @@ See [RELEASE.md](RELEASE.md) for prerelease, npm smoke-test, stable publish, git
 ## License
 
 MIT
+
+---
+
+**Maintained by** [Ivan Gabriel Yarupaitan Rivera](https://www.vanchi.pro/)

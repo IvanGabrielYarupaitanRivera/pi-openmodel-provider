@@ -39,3 +39,7 @@ The `/openmodel-stability` command shows real-time data from OpenModel's public 
 - 🟡 Degraded (≥95%)
 - 🔴 Unstable (<95%)
 - ⚪ No Data (<10 requests)
+
+---
+
+**Maintained by** [Ivan Gabriel Yarupaitan Rivera](https://www.vanchi.pro/)
