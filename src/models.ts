@@ -172,7 +172,7 @@ export async function fetchOpenModelModels(options?: {
 
   const [webModels, legacyModels] = await Promise.all([
     fetchWebModels({ fetchImpl }),
-    fetchLegacyModels({ fetchImpl }),
+    fetchLegacyModels({ fetchImpl }).catch(() => new Map()),
   ])
 
   const models: OpenModelProviderModel[] = []
@@ -185,8 +185,13 @@ export async function fetchOpenModelModels(options?: {
 
     const legacy = legacyModels.get(id)
     const protocols = legacy?.supported_protocols ?? []
-    const api = determineApi(protocols, web.provider_key)
-    if (!api) continue
+    let api = determineApi(protocols, web.provider_key)
+    if (!api) {
+      // Fallback: infer protocol from provider
+      if (["openai"].includes(web.provider_key)) api = "openai-responses"
+      else if (["gemini"].includes(web.provider_key)) api = "google-generative-ai"
+      else api = "anthropic-messages"
+    }
 
     const inputPrice = pricePerMillion(web.prices.input_cost_per_token as number)
     const outputPrice = pricePerMillion(web.prices.output_cost_per_token as number)

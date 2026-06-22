@@ -125,6 +125,39 @@ describe("Edge cases — models", () => {
       (err: Error) => err.message.includes("fetch"),
     )
   })
+
+  it("recovers when legacy endpoint fails with 401", async () => {
+    let legacyCalled = false
+    const mockFetch = mock.fn(async (url: string) => {
+      if ((url as string).includes("/web/v1/models")) {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            meta: { pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 } },
+            data: [{
+              key: "deepseek-v4-flash",
+              provider_key: "deepseek",
+              provider_name: "DeepSeek",
+              prices: { input_cost_per_token: 1.4e-7, output_cost_per_token: 2.8e-7 },
+              max: { max_input_tokens: 1_000_000, max_output_tokens: 65536 },
+              supports: { supports_reasoning: true, supports_vision: false },
+              price_multiplier: 1,
+            }],
+          }),
+        }
+      }
+      if ((url as string).includes("/v1/models")) {
+        legacyCalled = true
+        return { ok: false, status: 401, json: async () => ({ error: { message: "Unauthorized" } }) }
+      }
+      return { ok: false, json: async () => ({}) }
+    }) as unknown as typeof fetch
+
+    const models = await fetchOpenModelModels({ fetchImpl: mockFetch })
+    assert.equal(models.length, 1)
+    assert.ok(legacyCalled)
+  })
 })
 
 describe("Edge cases — stability", () => {

@@ -13,6 +13,7 @@ import {
   formatHealthStatus,
 } from "./src/stability.ts"
 import { friendlyMessage } from "./src/errors.ts"
+import { homedir } from "node:os"
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
@@ -70,7 +71,7 @@ export default async function (pi: ExtensionAPI) {
       let hasApiKey = false
       try {
         const { readFileSync } = await import("node:fs")
-        const authPath = `${require("node:os").homedir()}/.pi/agent/auth.json`
+        const authPath = `${homedir()}/.pi/agent/auth.json`
         const content = readFileSync(authPath, "utf-8")
         const data = JSON.parse(content)
         hasApiKey = !!(data.openmodel?.access || data.openmodel?.refresh)
