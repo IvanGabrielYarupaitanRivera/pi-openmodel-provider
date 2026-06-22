@@ -57,10 +57,10 @@ Models are fetched live from OpenModel's API at startup, so new models show up w
 
 ## Model discovery
 
-On startup, the provider fetches models from two public endpoints (no authentication required):
+On startup, the provider fetches models from two endpoints:
 
-- **Model list & protocols:** `https://api.openmodel.ai/v1/models`
-- **Pricing & capabilities:** `https://api.openmodel.ai/web/v1/models`
+- **Pricing & capabilities:** `https://api.openmodel.ai/web/v1/models` (public, no auth needed)
+- **Protocol info:** `https://api.openmodel.ai/v1/models` (requires API key — if unavailable, protocols are inferred from the provider)
 
 Pricing, context window, reasoning support, and vision capabilities are all provided by the API — no hardcoded data.
 
