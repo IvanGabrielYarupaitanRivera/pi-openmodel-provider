@@ -17,6 +17,21 @@ pi-openmodel-provider is a custom provider that connects pi to [OpenModel.ai](ht
 - **DeepSeek-V4-Flash** with 1M context window
 - **NOT** OpenRouter — this is a different service called OpenModel.ai
 
+## Model discovery
+
+Models are fetched live from OpenModel's API at startup:
+
+- **Pricing & capabilities:** `https://api.openmodel.ai/web/v1/models` (public, no auth needed)
+- **Protocol info:** `https://api.openmodel.ai/v1/models` (requires API key — if unavailable, protocols are inferred from provider)
+
+If the API key is not configured yet, models still load — protocols are inferred automatically from the provider name.
+
+## Thinking levels
+
+Reasoning models support thinking levels:
+- **Messages protocol:** minimal → low, low → medium, medium → high
+- **Responses protocol:** `reasoning_effort` levels (low, medium, high)
+
 ## Available commands
 
 - `/openmodel` — Show provider status
