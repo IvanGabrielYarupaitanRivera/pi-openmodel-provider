@@ -13,19 +13,30 @@ import {
   formatHealthStatus,
 } from "./src/stability.ts"
 import { friendlyMessage } from "./src/errors.ts"
+import { readModelCache, writeModelCache } from "./src/cache.ts"
 import { homedir } from "node:os"
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
   let modelError: string | null = null
+  let fromCache = false
 
-  try {
-    models = await fetchOpenModelModels()
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      modelError = "🌐 Network error: check your internet connection"
-    } else {
-      modelError = `⚠️ ${error instanceof Error ? error.message : "Could not load models"}`
+  // Try local cache first to avoid hitting the API on every startup
+  const cached = await readModelCache()
+  if (cached) {
+    models = cached
+    fromCache = true
+  } else {
+    try {
+      models = await fetchOpenModelModels()
+      // Fire-and-forget cache write (failures are silently ignored)
+      writeModelCache(models)
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        modelError = "🌐 Network error: check your internet connection"
+      } else {
+        modelError = `⚠️ ${error instanceof Error ? error.message : "Could not load models"}`
+      }
     }
   }
 
@@ -86,7 +97,7 @@ export default async function (pi: ExtensionAPI) {
         "╔══════════════════════════════════╗",
         "║        OpenModel.ai              ║",
         "╠══════════════════════════════════╣",
-        `║  Models: ${String(count).padStart(3)} loaded                    ║`,
+        `║  Models: ${String(count).padStart(3)} loaded${fromCache ? " (cached)" : ""}         ║`,
         hasApiKey ? "║  API Key: ✅ Configured              ║" : "║  API Key: ❌ Not configured          ║",
         "╠══════════════════════════════════╣",
         "║  Commands:                       ║",
