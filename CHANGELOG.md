@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.17] - 2026-06-23
+
+### Changed
+- **Major refactor (SRP):** Reorganized `src/` into single-responsibility modules
+  - `api/` — network fetching only (models, stability)
+  - `providers/` — pure business logic (compat, protocols, pricing)
+  - `auth/` — login orchestration + input validation separated
+  - `formatters/` — pure display formatting (stability health/confidence)
+  - Each file now has exactly one responsibility (was 1-4 before)
+- `index.ts` — replaced dynamic `import("node:fs")` with static top-level import
+
+### Documentation
+- `README.md` — added Codebase Architecture section with module descriptions
+- `CONTRIBUTING.md` — added Codebase Architecture section with contributor guidelines
+
 ## [0.2.16] - 2026-06-23
 
 ### Added

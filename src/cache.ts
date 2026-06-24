@@ -8,7 +8,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises"
 import { join } from "node:path"
 import { homedir } from "node:os"
-import type { OpenModelProviderModel } from "./models.ts"
+import type { OpenModelProviderModel } from "./api/models.ts"
 
 export const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
-import { sanitizeApiKey, isValidApiKey } from "../src/auth.ts"
+import { sanitizeApiKey, isValidApiKey } from "../src/auth/validate.ts"
 
 describe("sanitizeApiKey()", () => {
   it("removes terminal paste wrappers", () => {

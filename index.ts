@@ -5,15 +5,16 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
-import { fetchOpenModelModels } from "./src/models.ts"
-import { login, refreshToken, getApiKey } from "./src/auth.ts"
+import { fetchOpenModelModels } from "./src/api/models.ts"
+import { login, refreshToken, getApiKey } from "./src/auth/login.ts"
 import {
   fetchModelStabilitySummary,
   fetchModelStabilityDetail,
-  formatHealthStatus,
-} from "./src/stability.ts"
+} from "./src/api/stability.ts"
+import { formatHealthStatus } from "./src/formatters/stability.ts"
 import { friendlyMessage } from "./src/errors.ts"
 import { readModelCache, writeModelCache } from "./src/cache.ts"
+import { readFileSync } from "node:fs"
 import { homedir } from "node:os"
 
 export default async function (pi: ExtensionAPI) {
@@ -84,7 +85,6 @@ export default async function (pi: ExtensionAPI) {
       // Detect if user has configured an API key in auth.json
       let hasApiKey = false
       try {
-        const { readFileSync } = await import("node:fs")
         const authPath = `${homedir()}/.pi/agent/auth.json`
         const content = readFileSync(authPath, "utf-8")
         const data = JSON.parse(content)

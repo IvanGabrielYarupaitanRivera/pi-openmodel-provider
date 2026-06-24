@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { describe, it, mock } from "node:test"
 
-import { fetchOpenModelModels } from "../src/models.ts"
+import { fetchOpenModelModels } from "../src/api/models.ts"
 
 describe("Model pricing from API", () => {
   it("uses real pricing from API (no hardcoding)", async () => {

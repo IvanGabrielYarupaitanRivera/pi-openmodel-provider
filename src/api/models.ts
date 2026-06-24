@@ -3,12 +3,24 @@
  *
  * Fetches available models from OpenModel's public API (no auth required).
  * Pricing, context window, and capabilities are all provided by the API.
+ *
+ * This module owns the orchestration — ping both endpoints, merge results,
+ * and return canonical model objects. Provider-specific logic (compat,
+ * protocols, pricing) is delegated to src/providers/*.
  */
 
-import { parseWebError, parseProxyError, friendlyMessage } from "./errors.ts"
+import { parseWebError, parseProxyError, friendlyMessage } from "../errors.ts"
+import { pricePerMillion } from "../providers/pricing.ts"
+import { determineApi, inferApiFromProvider, thinkingLevelMapForApi } from "../providers/protocols.ts"
+import { compatForProvider } from "../providers/compat.ts"
+import type { ApiProtocol } from "../providers/protocols.ts"
 
 const DEFAULT_WEB_MODELS_URL = "https://api.openmodel.ai/web/v1/models"
 export const DEFAULT_LEGACY_MODELS_URL = "https://api.openmodel.ai/v1/models"
+
+// ──────────────────────────────────────────────
+// Public model interface
+// ──────────────────────────────────────────────
 
 export interface OpenModelProviderModel {
   id: string
@@ -19,9 +31,13 @@ export interface OpenModelProviderModel {
   cost: { input: number; output: number; cacheRead: number; cacheWrite: number }
   contextWindow: number
   maxTokens: number
-  api: "anthropic-messages" | "openai-responses" | "google-generative-ai"
+  api: ApiProtocol
   compat?: Record<string, unknown>
 }
+
+// ──────────────────────────────────────────────
+// Internal API response types
+// ──────────────────────────────────────────────
 
 interface WebApiModel {
   key: string
@@ -59,82 +75,10 @@ interface LegacyApiResponse {
   object: string
 }
 
-function pricePerMillion(costPerToken: number | undefined): number {
-  if (costPerToken === undefined || costPerToken === null) return 0
-  return Math.round(costPerToken * 1_000_000 * 1000) / 1000
-}
+// ──────────────────────────────────────────────
+// Fetch: Web API (public, pageable)
+// ──────────────────────────────────────────────
 
-function determineApi(protocols: string[], provider: string): "anthropic-messages" | "openai-responses" | "google-generative-ai" | null {
-  if (protocols.includes("messages")) return "anthropic-messages"
-  if (protocols.includes("responses")) return "openai-responses"
-  if (protocols.includes("gemini")) return "google-generative-ai"
-  return null
-}
-
-/**
- * Determine compat flags based on provider and API.
- * These tell pi about provider-specific quirks and capabilities.
- */
-function compatForProvider(
-  providerKey: string,
-  api: "anthropic-messages" | "openai-responses" | "google-generative-ai",
-  reasoning: boolean,
-): Record<string, unknown> | undefined {
-  switch (providerKey) {
-    case "openai":
-      return { supportsReasoningEffort: true }
-    case "deepseek":
-      if (reasoning) {
-        return { thinkingFormat: "deepseek" }
-      }
-      return undefined
-    case "anthropic":
-      return {
-        sendSessionAffinityHeaders: true,
-        supportsCacheControlOnTools: true,
-        supportsEagerToolInputStreaming: true,
-      }
-    case "google":
-    case "gemini":
-      return undefined
-    case "qwen":
-      if (reasoning) {
-        return { thinkingFormat: "qwen-chat-template" }
-      }
-      return undefined
-    case "zai":
-      if (reasoning) {
-        return { thinkingFormat: "zai" }
-      }
-      return undefined
-    default:
-      return undefined
-  }
-}
-
-function thinkingLevelMapForApi(api: "anthropic-messages" | "openai-responses" | "google-generative-ai"): Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>> {
-  if (api === "anthropic-messages") {
-    return {
-      minimal: "low",
-      low: "medium",
-      medium: "high",
-      high: "high",
-      xhigh: "max",
-    }
-  }
-  if (api === "openai-responses") {
-    return {
-      minimal: "low",
-      low: "low",
-      medium: "medium",
-      high: "high",
-      xhigh: "high",
-    }
-  }
-  return {}
-}
-
-/** Fetch all models from the web API (public, no auth required) */
 async function fetchWebModels(options?: {
   url?: string
   fetchImpl?: typeof fetch
@@ -155,12 +99,16 @@ async function fetchWebModels(options?: {
       let body: any
       try { body = await response.json() } catch {}
       const err = parseWebError(body)
-      throw new Error(`Failed to fetch models: ${response.status} ${err.code} — ${friendlyMessage(err.code, err.message)}`)
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${err.code} — ${friendlyMessage(err.code, err.message)}`,
+      )
     }
 
     const body = (await response.json()) as WebApiResponse
     if (!body.success) {
-      throw new Error(`Failed to fetch models — ${friendlyMessage("INTERNAL_ERROR", "Unknown error")}`)
+      throw new Error(
+        `Failed to fetch models — ${friendlyMessage("INTERNAL_ERROR", "Unknown error")}`,
+      )
     }
 
     totalPages = body.meta.pagination.totalPages
@@ -173,7 +121,10 @@ async function fetchWebModels(options?: {
   return modelMap
 }
 
-/** Fetch protocol info from legacy models endpoint */
+// ──────────────────────────────────────────────
+// Fetch: Legacy API (requires API key)
+// ──────────────────────────────────────────────
+
 async function fetchLegacyModels(options?: {
   url?: string
   fetchImpl?: typeof fetch
@@ -189,7 +140,9 @@ async function fetchLegacyModels(options?: {
     let body: any
     try { body = await response.json() } catch {}
     const err = parseProxyError(body)
-    throw new Error(`Failed to fetch models: ${response.status} — ${friendlyMessage(err.code, err.message)}`)
+    throw new Error(
+      `Failed to fetch models: ${response.status} — ${friendlyMessage(err.code, err.message)}`,
+    )
   }
 
   const body = (await response.json()) as LegacyApiResponse
@@ -204,7 +157,17 @@ async function fetchLegacyModels(options?: {
   return modelMap
 }
 
-/** Fetch models from OpenModel API (public, no auth required) */
+// ──────────────────────────────────────────────
+// Orchestration
+// ──────────────────────────────────────────────
+
+/**
+ * Fetch all models from OpenModel API (public, no auth required for web endpoint).
+ *
+ * Combines pricing/capabilities from the web API with protocol info from
+ * the legacy endpoint. If the legacy endpoint fails (e.g., no API key),
+ * protocols are inferred from the provider name.
+ */
 export async function fetchOpenModelModels(options?: {
   webUrl?: string
   legacyUrl?: string
@@ -220,26 +183,30 @@ export async function fetchOpenModelModels(options?: {
   const models: OpenModelProviderModel[] = []
 
   for (const [id, web] of webModels) {
-    // Skip image-only models
-    if (web.supports.supports_image_generation && !web.supports.supports_vision && !web.supports.supports_reasoning) {
+    // Skip image-only models (e.g., DALL-E)
+    if (
+      web.supports.supports_image_generation &&
+      !web.supports.supports_vision &&
+      !web.supports.supports_reasoning
+    ) {
       continue
     }
 
+    // Determine API protocol
     const legacy = legacyModels.get(id)
     const protocols = legacy?.supported_protocols ?? []
     let api = determineApi(protocols, web.provider_key)
     if (!api) {
-      // Fallback: infer protocol from provider
-      if (["openai"].includes(web.provider_key)) api = "openai-responses"
-      else if (["gemini"].includes(web.provider_key)) api = "google-generative-ai"
-      else api = "anthropic-messages"
+      api = inferApiFromProvider(web.provider_key)
     }
 
+    // Parse pricing
     const inputPrice = pricePerMillion(web.prices.input_cost_per_token as number)
     const outputPrice = pricePerMillion(web.prices.output_cost_per_token as number)
     const cacheRead = pricePerMillion(web.prices.cache_read_input_token_cost as number)
     const cacheWrite = pricePerMillion(web.prices.cache_creation_input_token_cost as number)
 
+    // Build model config
     const reasoning = web.supports.supports_reasoning ?? false
     const compat = compatForProvider(web.provider_key, api, reasoning)
 
@@ -247,7 +214,7 @@ export async function fetchOpenModelModels(options?: {
       id,
       name: id,
       reasoning,
-      input: web.supports.supports_vision ? ["text", "image"] as const : ["text"] as const,
+      input: web.supports.supports_vision ? (["text", "image"] as const) : (["text"] as const),
       cost: {
         input: inputPrice * (web.price_multiplier ?? 1),
         output: outputPrice * (web.price_multiplier ?? 1),

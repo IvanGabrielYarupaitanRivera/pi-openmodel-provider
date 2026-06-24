@@ -4,9 +4,11 @@ import { describe, it, mock } from "node:test"
 import {
   formatHealthStatus,
   formatConfidence,
+} from "../src/formatters/stability.ts"
+import {
   fetchModelStabilitySummary,
   fetchModelStabilityDetail,
-} from "../src/stability.ts"
+} from "../src/api/stability.ts"
 
 describe("formatHealthStatus()", () => {
   it('returns ✅ Operational for operational status', () => {

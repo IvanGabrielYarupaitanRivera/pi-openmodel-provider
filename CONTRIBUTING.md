@@ -13,6 +13,37 @@ cd pi-openmodel-provider
 npm install
 ```
 
+## Codebase Architecture
+
+The project follows the **Single Responsibility Principle** — each module does exactly one thing.
+
+```
+src/
+├── api/                    # Network fetching (models, stability)
+│   ├── models.ts           #   fetchOpenModelModels() — model discovery orchestration
+│   └── stability.ts        #   fetchModelStabilitySummary/Detail()
+├── providers/              # Provider-specific business logic
+│   ├── compat.ts           #   compatForProvider() — per-provider compatibility flags
+│   ├── protocols.ts        #   determineApi() + thinkingLevelMapForApi()
+│   └── pricing.ts          #   pricePerMillion() — cost-per-token conversion
+├── auth/                   # Authentication flow
+│   ├── login.ts            #   login() + refreshToken() + getApiKey()
+│   └── validate.ts         #   sanitizeApiKey() + isValidApiKey()
+├── formatters/             # Pure display formatting
+│   └── stability.ts        #   formatHealthStatus() + formatConfidence()
+├── cache.ts                # Local model cache (read/write)
+├── errors.ts               # API error parsing + friendly messages
+└── stub.d.ts               # Type stubs for pi peer dependency
+```
+
+**Guidelines for contributors:**
+- **`api/`** — HTTP fetching only. Never add business logic or formatting here.
+- **`providers/`** — Pure functions. No side effects, no network calls, no I/O.
+- **`formatters/`** — Pure functions. Only string/output formatting.
+- **`auth/`** — `validate.ts` for pure input checks, `login.ts` for orchestration.
+- **`cache.ts`** / **`errors.ts`** — Shared utilities used across modules.
+- **Tests** — Place in `tests/` and mock network boundaries via `fetchImpl` injection.
+
 ## Type Checking
 
 ```sh

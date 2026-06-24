@@ -93,6 +93,7 @@ Model pricing is fetched live from OpenModel's public API (`/web/v1/models`). Ea
 - **Friendly error messages** with emojis and actionable guidance
 - **No hardcoding** — new models, pricing, and capabilities appear automatically
 - **CI workflow** — typecheck and tests run on every push and PR
+- **Modular architecture** — each module has a single responsibility (SRP), making the codebase easy to maintain and extend
 
 ## Error handling
 
@@ -161,6 +162,37 @@ npm run test:pricing
 npm run test:stability
 npm run test:edge
 ```
+
+### Codebase Architecture
+
+The source code is organized by responsibility following the Single Responsibility Principle:
+
+```
+src/
+├── api/                    # Network fetching (models, stability)
+│   ├── models.ts           #   fetchOpenModelModels() — model discovery orchestration
+│   └── stability.ts        #   fetchModelStabilitySummary/Detail()
+├── providers/              # Provider-specific business logic
+│   ├── compat.ts           #   compatForProvider() — per-provider compatibility flags
+│   ├── protocols.ts        #   determineApi() + thinkingLevelMapForApi()
+│   └── pricing.ts          #   pricePerMillion() — cost-per-token conversion
+├── auth/                   # Authentication flow
+│   ├── login.ts            #   login() + refreshToken() + getApiKey()
+│   └── validate.ts         #   sanitizeApiKey() + isValidApiKey()
+├── formatters/             # Pure display formatting
+│   └── stability.ts        #   formatHealthStatus() + formatConfidence()
+├── cache.ts                # Local model cache (read/write)
+├── errors.ts               # API error parsing + friendly messages
+└── stub.d.ts               # Type stubs for pi peer dependency
+```
+
+**Key principles:**
+- Each file has exactly one responsibility
+- `api/` modules only handle HTTP — no business logic
+- `providers/` modules are pure functions — no side effects
+- `formatters/` modules are pure — no network calls
+- `auth/` separates input validation from login orchestration
+- Tests mirror the source structure and mock network boundaries
 
 ## Contributing
 

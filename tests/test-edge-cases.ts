@@ -1,9 +1,9 @@
 import assert from "node:assert/strict"
 import { describe, it, mock } from "node:test"
 
-import { fetchOpenModelModels } from "../src/models.ts"
-import { fetchModelStabilitySummary } from "../src/stability.ts"
-import { sanitizeApiKey } from "../src/auth.ts"
+import { fetchOpenModelModels } from "../src/api/models.ts"
+import { fetchModelStabilitySummary } from "../src/api/stability.ts"
+import { sanitizeApiKey } from "../src/auth/validate.ts"
 
 describe("Edge cases — models", () => {
   it("handles models with null/zero prices", async () => {
