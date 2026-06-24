@@ -26,11 +26,24 @@ Models are fetched live from OpenModel's API at startup:
 
 If the API key is not configured yet, models still load — protocols are inferred automatically from the provider name.
 
+### Caching
+
+Models are cached locally at `~/.pi/agent/cache/openmodel-models.json` with a **5-minute TTL**. On subsequent startups or `/reload`, the cached list is used instead of hitting the API again. The `/openmodel` command shows `(cached)` when the cache is active.
+
 ## Thinking levels
 
 Reasoning models support thinking levels:
 - **Messages protocol:** minimal → low, low → medium, medium → high
 - **Responses protocol:** `reasoning_effort` levels (low, medium, high)
+
+## Compat flags
+
+Compat flags are automatically set per provider for optimal protocol compatibility:
+- **OpenAI:** `supportsReasoningEffort: true`
+- **Anthropic:** `sendSessionAffinityHeaders`, `supportsCacheControlOnTools`, `supportsEagerToolInputStreaming`
+- **DeepSeek (reasoning):** `thinkingFormat: "deepseek"`
+- **Qwen (reasoning):** `thinkingFormat: "qwen-chat-template"`
+- **ZAI / GLM (reasoning):** `thinkingFormat: "zai"`
 
 ## Available commands
 

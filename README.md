@@ -3,6 +3,7 @@
 A [pi](https://github.com/earendil-works/pi-mono) custom provider that connects pi to [OpenModel.ai](https://www.openmodel.ai) — a unified AI API gateway.
 
 [![npm version](https://img.shields.io/npm/v/pi-openmodel-provider)](https://www.npmjs.com/package/pi-openmodel-provider)
+[![CI](https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/actions/workflows/ci.yml/badge.svg)](https://github.com/IvanGabrielYarupaitanRivera/pi-openmodel-provider/actions/workflows/ci.yml)
 
 > **Disclaimer:** This is an unofficial, community-maintained package. I am not affiliated with, endorsed by, or connected to OpenModel in any way. This provider simply forwards requests to the public OpenModel API using your own API key.
 
@@ -64,6 +65,12 @@ On startup, the provider fetches models from two endpoints:
 
 Pricing, context window, reasoning support, and vision capabilities are all provided by the API — no hardcoded data.
 
+### Caching
+
+Models are cached locally at `~/.pi/agent/cache/openmodel-models.json` with a **5-minute TTL**. On subsequent startups or `/reload`, the cached list is used instead of hitting the API again. The `/openmodel` command shows `(cached)` when the cache is active.
+
+To force a fresh fetch, wait 5 minutes or delete the cache file manually.
+
 ## Pricing
 
 Model pricing is fetched live from OpenModel's public API (`/web/v1/models`). Each model returns its real per-token rates in microdollars, converted to dollars per million tokens for display.
@@ -75,13 +82,17 @@ Model pricing is fetched live from OpenModel's public API (`/web/v1/models`). Ea
 
 ## Features
 
-- **41 models** from 9+ providers (dynamically fetched)
+- **41+ models** from 9+ providers (dynamically fetched)
 - **3 protocols**: Messages (Anthropic), Responses (OpenAI), Gemini (Google)
 - **Model stability metrics** via `/openmodel-stability`
 - **1M context window** for DeepSeek V4 models
 - **Thinking levels** for reasoning models (DeepSeek, Claude, GPT, Gemini, etc.)
+- **Compat flags** per provider for optimal protocol compatibility
+- **Local caching** with 5-minute TTL to reduce API calls
+- **AbortSignal support** in stability commands for cancellation
 - **Friendly error messages** with emojis and actionable guidance
 - **No hardcoding** — new models, pricing, and capabilities appear automatically
+- **CI workflow** — typecheck and tests run on every push and PR
 
 ## Error handling
 

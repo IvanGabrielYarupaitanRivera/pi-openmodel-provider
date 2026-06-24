@@ -22,8 +22,24 @@ npm run typecheck
 ## Testing
 
 ```sh
+# Run all tests
+npm test
+
+# Run individual test suites
 npm run test:models
+npm run test:auth
+npm run test:pricing
+npm run test:stability
+npm run test:edge
 ```
+
+## Continuous Integration
+
+On every push and pull request to `master`, GitHub Actions automatically runs:
+- `npm run typecheck` — TypeScript type checking
+- `npm test` — All test suites
+
+Make sure both pass locally before pushing.
 
 ## Commit Message Rules
 

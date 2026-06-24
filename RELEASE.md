@@ -6,7 +6,7 @@
 - [ ] Update `CHANGELOG.md` with new version and changes
 - [ ] Update `AGENTS.md` and SKILL.md if new features added
 - [ ] Run type checking: `npm run typecheck`
-- [ ] Run tests: `npm run test:models`
+- [ ] Run all tests: `npm test`
 - [ ] Create and merge PR for review
 
 ## NPM Smoke-Test
@@ -40,7 +40,7 @@ pi install npm:test-openmodel
 ```sh
 # Make sure all tests pass
 npm run typecheck
-npm run test:models
+npm test
 
 # Push to GitHub
 git push origin master

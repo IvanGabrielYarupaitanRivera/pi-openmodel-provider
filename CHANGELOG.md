@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.16] - 2026-06-23
+
+### Added
+- Local model cache at `~/.pi/agent/cache/openmodel-models.json` with 5-minute TTL
+- `src/cache.ts` module for cache read/write operations
+- Compat flags per provider (openai, anthropic, deepseek, qwen, zai) for optimal protocol compatibility
+- AbortSignal support in stability fetch functions
+- CI workflow (`.github/workflows/ci.yml`) for typecheck + tests on push and PR
+- Typecheck and test steps before publish in `.github/workflows/publish.yml`
+- `(cached)` indicator in `/openmodel` status output
+
+### Changed
+- Models now load from cache first, falling back to API fetch
+- Updated `actions/checkout` and `actions/setup-node` to v5 (Node 24 native)
+
 ## [0.2.14] - 2026-06-22
 
 ### Changed
