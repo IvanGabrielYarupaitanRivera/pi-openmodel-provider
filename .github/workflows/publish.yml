@@ -20,4 +20,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm install -g npm@latest
       - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
       - run: npm publish --provenance

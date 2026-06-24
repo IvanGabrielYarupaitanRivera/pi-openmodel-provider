@@ -20,6 +20,7 @@ export interface OpenModelProviderModel {
   contextWindow: number
   maxTokens: number
   api: "anthropic-messages" | "openai-responses" | "google-generative-ai"
+  compat?: Record<string, unknown>
 }
 
 interface WebApiModel {
@@ -68,6 +69,47 @@ function determineApi(protocols: string[], provider: string): "anthropic-message
   if (protocols.includes("responses")) return "openai-responses"
   if (protocols.includes("gemini")) return "google-generative-ai"
   return null
+}
+
+/**
+ * Determine compat flags based on provider and API.
+ * These tell pi about provider-specific quirks and capabilities.
+ */
+function compatForProvider(
+  providerKey: string,
+  api: "anthropic-messages" | "openai-responses" | "google-generative-ai",
+  reasoning: boolean,
+): Record<string, unknown> | undefined {
+  switch (providerKey) {
+    case "openai":
+      return { supportsReasoningEffort: true }
+    case "deepseek":
+      if (reasoning) {
+        return { thinkingFormat: "deepseek" }
+      }
+      return undefined
+    case "anthropic":
+      return {
+        sendSessionAffinityHeaders: true,
+        supportsCacheControlOnTools: true,
+        supportsEagerToolInputStreaming: true,
+      }
+    case "google":
+    case "gemini":
+      return undefined
+    case "qwen":
+      if (reasoning) {
+        return { thinkingFormat: "qwen-chat-template" }
+      }
+      return undefined
+    case "zai":
+      if (reasoning) {
+        return { thinkingFormat: "zai" }
+      }
+      return undefined
+    default:
+      return undefined
+  }
 }
 
 function thinkingLevelMapForApi(api: "anthropic-messages" | "openai-responses" | "google-generative-ai"): Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>> {
@@ -199,6 +241,7 @@ export async function fetchOpenModelModels(options?: {
     const cacheWrite = pricePerMillion(web.prices.cache_creation_input_token_cost as number)
 
     const reasoning = web.supports.supports_reasoning ?? false
+    const compat = compatForProvider(web.provider_key, api, reasoning)
 
     const base = {
       id,
@@ -219,6 +262,7 @@ export async function fetchOpenModelModels(options?: {
     const model = {
       ...base,
       ...(reasoning ? { thinkingLevelMap: thinkingLevelMapForApi(api) } : {}),
+      ...(compat ? { compat } : {}),
     } as unknown as OpenModelProviderModel
 
     models.push(model)

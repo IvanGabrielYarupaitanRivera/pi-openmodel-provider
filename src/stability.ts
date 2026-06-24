@@ -74,6 +74,7 @@ export async function fetchModelStabilitySummary(options?: {
   url?: string;
   fetchImpl?: typeof fetch;
   hours?: number;
+  signal?: AbortSignal;
 }): Promise<ModelStability[]> {
   const url = options?.url ?? STABILITY_SUMMARY_URL;
   const fetchImpl = options?.fetchImpl ?? fetch;
@@ -82,6 +83,7 @@ export async function fetchModelStabilitySummary(options?: {
   const params = new URLSearchParams({ hours: String(hours) });
   const response = await fetchImpl(`${url}?${params}`, {
     headers: { accept: "application/json" },
+    signal: options?.signal ?? null,
   });
 
   if (!response.ok) {
@@ -118,6 +120,7 @@ export async function fetchModelStabilityDetail(
   options?: {
     fetchImpl?: typeof fetch;
     hours?: number;
+    signal?: AbortSignal;
   },
 ): Promise<ModelStabilityDetail> {
   const fetchImpl = options?.fetchImpl ?? fetch;
@@ -126,7 +129,7 @@ export async function fetchModelStabilityDetail(
   const params = new URLSearchParams({ hours: String(hours) });
   const response = await fetchImpl(
     `https://api.openmodel.ai/web/v1/model-stability/${encodeURIComponent(modelKey)}?${params}`,
-    { headers: { accept: "application/json" } },
+    { headers: { accept: "application/json" }, signal: options?.signal ?? null },
   );
 
   if (!response.ok) {

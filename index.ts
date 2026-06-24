@@ -54,6 +54,9 @@ export default async function (pi: ExtensionAPI) {
       if (model.thinkingLevelMap) {
         config.thinkingLevelMap = model.thinkingLevelMap
       }
+      if (model.compat) {
+        config.compat = model.compat
+      }
       return config
     }),
   })
@@ -115,7 +118,7 @@ export default async function (pi: ExtensionAPI) {
       try {
         if (args?.trim()) {
           const name = args.trim()
-          const detail = await fetchModelStabilityDetail(name)
+          const detail = await fetchModelStabilityDetail(name, { signal: ctx.signal })
           const lines = [
             `📊 ${detail.model_name}`,
             `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -128,7 +131,7 @@ export default async function (pi: ExtensionAPI) {
           ]
           ctx.ui.notify(lines.join("\n"), "info")
         } else {
-          const summary = await fetchModelStabilitySummary()
+          const summary = await fetchModelStabilitySummary({ signal: ctx.signal })
           if (summary.length === 0) {
             ctx.ui.notify("📊 No stability data available for any model yet.", "warning")
             return
