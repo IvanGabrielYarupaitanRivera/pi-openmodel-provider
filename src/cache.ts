@@ -22,13 +22,27 @@ interface ModelCache {
   models: readonly OpenModelProviderModel[]
 }
 
+/** Minimal fs interface matching what cache.ts actually uses */
+export interface CacheFs {
+  readFile(path: string, encoding: string): Promise<string>
+  writeFile(path: string, data: string, encoding?: string): Promise<void>
+  mkdir(path: string, options?: { recursive?: boolean }): Promise<void>
+}
+
+const DEFAULT_FS: CacheFs = {
+  readFile: readFile as CacheFs["readFile"],
+  writeFile: writeFile as CacheFs["writeFile"],
+  mkdir: mkdir as CacheFs["mkdir"],
+}
+
 /**
  * Read models from cache.
  * Returns null if cache is missing, expired, or corrupted.
  */
-export async function readModelCache(): Promise<readonly OpenModelProviderModel[] | null> {
+export async function readModelCache(fsImpl?: CacheFs): Promise<readonly OpenModelProviderModel[] | null> {
+  const { readFile: rf } = fsImpl ?? DEFAULT_FS
   try {
-    const raw = await readFile(CACHE_FILE, "utf-8")
+    const raw = await rf(CACHE_FILE, "utf-8")
     const cache: ModelCache = JSON.parse(raw)
 
     if (typeof cache.timestamp !== "number" || !Array.isArray(cache.models)) {
@@ -50,11 +64,12 @@ export async function readModelCache(): Promise<readonly OpenModelProviderModel[
  * Write models to the local cache.
  * Failures are silently ignored — cache is optional.
  */
-export async function writeModelCache(models: readonly OpenModelProviderModel[]): Promise<void> {
+export async function writeModelCache(models: readonly OpenModelProviderModel[], fsImpl?: CacheFs): Promise<void> {
+  const { mkdir: mkd, writeFile: wf } = fsImpl ?? DEFAULT_FS
   try {
-    await mkdir(CACHE_DIR, { recursive: true })
+    await mkd(CACHE_DIR, { recursive: true })
     const cache: ModelCache = { timestamp: Date.now(), models }
-    await writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8")
+    await wf(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8")
   } catch {
     // Cache writes are best-effort
   }
