@@ -40,7 +40,8 @@
     "test:pricing": "tsx tests/test-pricing.ts",
     "test:stability": "tsx tests/test-stability.ts",
     "test:edge": "tsx tests/test-edge-cases.ts",
-    "test": "tsx tests/test-models.ts && tsx tests/test-auth.ts && tsx tests/test-pricing.ts && tsx tests/test-stability.ts && tsx tests/test-edge-cases.ts"
+    "test:cache": "tsx tests/test-cache.ts",
+    "test": "tsx tests/test-models.ts && tsx tests/test-auth.ts && tsx tests/test-pricing.ts && tsx tests/test-stability.ts && tsx tests/test-edge-cases.ts && tsx tests/test-cache.ts"
   },
   "pi": {
     "extensions": [
