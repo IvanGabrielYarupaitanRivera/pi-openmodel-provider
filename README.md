@@ -161,6 +161,7 @@ npm run test:auth
 npm run test:pricing
 npm run test:stability
 npm run test:edge
+npm run test:cache
 ```
 
 ### Codebase Architecture
@@ -181,6 +182,7 @@ src/
 │   └── validate.ts         #   sanitizeApiKey() + isValidApiKey()
 ├── formatters/             # Pure display formatting
 │   └── stability.ts        #   formatHealthStatus() + formatConfidence()
+├── health.ts               # Shared health status determination
 ├── cache.ts                # Local model cache (read/write)
 ├── errors.ts               # API error parsing + friendly messages
 └── stub.d.ts               # Type stubs for pi peer dependency

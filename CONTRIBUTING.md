@@ -31,6 +31,7 @@ src/
 │   └── validate.ts         #   sanitizeApiKey() + isValidApiKey()
 ├── formatters/             # Pure display formatting
 │   └── stability.ts        #   formatHealthStatus() + formatConfidence()
+├── health.ts               # Shared health status determination
 ├── cache.ts                # Local model cache (read/write)
 ├── errors.ts               # API error parsing + friendly messages
 └── stub.d.ts               # Type stubs for pi peer dependency
@@ -41,6 +42,7 @@ src/
 - **`providers/`** — Pure functions. No side effects, no network calls, no I/O.
 - **`formatters/`** — Pure functions. Only string/output formatting.
 - **`auth/`** — `validate.ts` for pure input checks, `login.ts` for orchestration.
+- **`health.ts`** — Pure function. Shared health/status logic, no side effects.
 - **`cache.ts`** / **`errors.ts`** — Shared utilities used across modules.
 - **Tests** — Place in `tests/` and mock network boundaries via `fetchImpl` injection.
 
@@ -62,6 +64,7 @@ npm run test:auth
 npm run test:pricing
 npm run test:stability
 npm run test:edge
+npm run test:cache
 ```
 
 ## Continuous Integration

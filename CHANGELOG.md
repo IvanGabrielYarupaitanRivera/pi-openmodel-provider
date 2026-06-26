@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.17] - 2026-06-23
+## [0.2.18] - 2026-06-26
+
+### Added
+- `src/health.ts` — shared `HealthStatus` type and `determineHealth()` function, extracted from `src/api/stability.ts` and `src/formatters/stability.ts` to eliminate code duplication
+- `tests/test-cache.ts` — 12 tests covering cache read (valid, expired, corrupted, missing) and write (success, directory creation, error suppression)
+- `CacheFs` interface in `src/cache.ts` for dependency injection (matching `fetchImpl` pattern)
+- `test:cache` npm script
+
+### Changed
+- `src/api/stability.ts` — removed local `determineHealthFallback()` copy, imports from `src/health.ts` instead
+- `src/formatters/stability.ts` — removed local `determineHealth()` copy, imports from `src/health.ts` instead
+- `src/api/models.ts` — eliminated unsafe `as unknown as OpenModelProviderModel` cast and 4 `as number` price casts via type annotation and `getNumberPrice()` helper; removed `as const` on model base object
+- `src/providers/compat.ts` — removed unused `api` parameter from `compatForProvider()`
+- `index.ts` — replaced blocking `readFileSync` with `await readFile` from `fs/promises`
+- `LICENSE` — added copyright holder name
+- `tsconfig.json` — enabled `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noFallthroughCasesInSwitch`
+- `AGENTS.md` — reduced to LLM-focused bullet points with references to README and SKILL.md
+- `README.md` — added `health.ts` to architecture tree, added `test:cache` to development section
 
 ### Changed
 - **Major refactor (SRP):** Reorganized `src/` into single-responsibility modules
