@@ -161,6 +161,15 @@ async function fetchLegacyModels(options?: {
 // Orchestration
 // ──────────────────────────────────────────────
 
+/** Safely extract a numeric price from the prices record */
+function getNumberPrice(
+  prices: Record<string, number | Record<string, number>>,
+  key: string,
+): number | undefined {
+  const val = prices[key]
+  return typeof val === "number" ? val : undefined
+}
+
 /**
  * Fetch all models from OpenModel API (public, no auth required for web endpoint).
  *
@@ -200,17 +209,17 @@ export async function fetchOpenModelModels(options?: {
       api = inferApiFromProvider(web.provider_key)
     }
 
-    // Parse pricing
-    const inputPrice = pricePerMillion(web.prices.input_cost_per_token as number)
-    const outputPrice = pricePerMillion(web.prices.output_cost_per_token as number)
-    const cacheRead = pricePerMillion(web.prices.cache_read_input_token_cost as number)
-    const cacheWrite = pricePerMillion(web.prices.cache_creation_input_token_cost as number)
+    // Parse pricing (safely — some price fields may be Record<string, number>)
+    const inputPrice = pricePerMillion(getNumberPrice(web.prices, "input_cost_per_token"))
+    const outputPrice = pricePerMillion(getNumberPrice(web.prices, "output_cost_per_token"))
+    const cacheRead = pricePerMillion(getNumberPrice(web.prices, "cache_read_input_token_cost"))
+    const cacheWrite = pricePerMillion(getNumberPrice(web.prices, "cache_creation_input_token_cost"))
 
     // Build model config
     const reasoning = web.supports.supports_reasoning ?? false
     const compat = compatForProvider(web.provider_key, api, reasoning)
 
-    const base = {
+    const model: OpenModelProviderModel = {
       id,
       name: id,
       reasoning,
@@ -224,13 +233,9 @@ export async function fetchOpenModelModels(options?: {
       contextWindow: web.max.max_input_tokens ?? 128_000,
       maxTokens: web.max.max_output_tokens ?? web.max.max_tokens ?? 16_384,
       api,
-    } as const
-
-    const model = {
-      ...base,
       ...(reasoning ? { thinkingLevelMap: thinkingLevelMapForApi(api) } : {}),
       ...(compat ? { compat } : {}),
-    } as unknown as OpenModelProviderModel
+    }
 
     models.push(model)
   }
