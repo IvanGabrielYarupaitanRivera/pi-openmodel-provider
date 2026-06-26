@@ -6,15 +6,12 @@
  * affinity, cache control, etc.).
  */
 
-import type { ApiProtocol } from "./protocols.ts"
-
 /**
- * Determine compat flags based on provider and API.
+ * Determine compat flags based on provider.
  * Returns undefined when no special flags are needed.
  */
 export function compatForProvider(
   providerKey: string,
-  api: ApiProtocol,
   reasoning: boolean,
 ): Record<string, unknown> | undefined {
   switch (providerKey) {

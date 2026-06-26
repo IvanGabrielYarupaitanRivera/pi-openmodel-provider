@@ -217,7 +217,7 @@ export async function fetchOpenModelModels(options?: {
 
     // Build model config
     const reasoning = web.supports.supports_reasoning ?? false
-    const compat = compatForProvider(web.provider_key, api, reasoning)
+    const compat = compatForProvider(web.provider_key, reasoning)
 
     const model: OpenModelProviderModel = {
       id,

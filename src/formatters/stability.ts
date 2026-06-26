@@ -7,8 +7,6 @@
 
 import type { HealthStatus } from "../health.ts"
 import type { ConfidenceLevel } from "../api/stability.ts"
-import { determineHealth } from "../health.ts"
-
 /** Format health status with emoji */
 export function formatHealthStatus(status: HealthStatus): string {
   switch (status) {

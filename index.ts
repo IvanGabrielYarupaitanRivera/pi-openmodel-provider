@@ -12,9 +12,8 @@ import {
   fetchModelStabilityDetail,
 } from "./src/api/stability.ts"
 import { formatHealthStatus } from "./src/formatters/stability.ts"
-import { friendlyMessage } from "./src/errors.ts"
 import { readModelCache, writeModelCache } from "./src/cache.ts"
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 import { homedir } from "node:os"
 
 export default async function (pi: ExtensionAPI) {
@@ -78,15 +77,12 @@ export default async function (pi: ExtensionAPI) {
     description: "Show OpenModel provider status",
     handler: async (_args: string, ctx: any) => {
       const count = models.length
-      const status = count > 0
-        ? `✅ ${count} models loaded`
-        : modelError ?? "❌ No models loaded"
 
       // Detect if user has configured an API key in auth.json
       let hasApiKey = false
       try {
         const authPath = `${homedir()}/.pi/agent/auth.json`
-        const content = readFileSync(authPath, "utf-8")
+        const content = await readFile(authPath, "utf-8")
         const data = JSON.parse(content)
         hasApiKey = !!(data.openmodel?.access || data.openmodel?.refresh)
       } catch {
