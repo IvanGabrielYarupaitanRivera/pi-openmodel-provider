@@ -12,17 +12,11 @@
  */
 
 import { parseWebError, friendlyMessage } from "../errors.ts"
+import { determineHealth } from "../health.ts"
+import type { HealthStatus } from "../health.ts"
 
 export const STABILITY_SUMMARY_URL =
   "https://api.openmodel.ai/web/v1/model-stability/summary"
-
-/** Health status derived from success rate */
-export type HealthStatus =
-  | "operational"
-  | "healthy"
-  | "degraded"
-  | "unstable"
-  | "no_data"
 
 /** Confidence level based on sample size */
 export type ConfidenceLevel = "high" | "medium" | "low"
@@ -100,7 +94,7 @@ export async function fetchModelStabilitySummary(options?: {
 
   return body.data.map((item) => ({
     ...item,
-    health_status: determineHealthFallback(item.success_rate, item.confidence),
+    health_status: determineHealth(item.success_rate, item.confidence),
   }))
 }
 
@@ -161,24 +155,9 @@ export async function fetchModelStabilityDetail(
 
   return {
     ...body.data,
-    health_status: determineHealthFallback(
+    health_status: determineHealth(
       body.data.summary.success_rate,
       body.data.confidence,
     ),
   }
-}
-
-/**
- * Inline fallback to avoid circular dependency with formatters.
- * determineHealth() in formatters/stability.ts is the canonical version.
- */
-function determineHealthFallback(
-  successRate: number,
-  confidence: ConfidenceLevel,
-): HealthStatus {
-  if (confidence === "low") return "no_data"
-  if (successRate >= 99.9) return "operational"
-  if (successRate >= 99) return "healthy"
-  if (successRate >= 95) return "degraded"
-  return "unstable"
 }

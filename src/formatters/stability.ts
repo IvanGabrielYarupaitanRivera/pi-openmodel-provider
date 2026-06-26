@@ -5,19 +5,9 @@
  * Transforms health/confidence data into display-ready strings.
  */
 
-import type { HealthStatus, ConfidenceLevel } from "../api/stability.ts"
-
-/** Determine health status from success rate and confidence */
-export function determineHealth(
-  successRate: number,
-  confidence: ConfidenceLevel,
-): HealthStatus {
-  if (confidence === "low") return "no_data"
-  if (successRate >= 99.9) return "operational"
-  if (successRate >= 99) return "healthy"
-  if (successRate >= 95) return "degraded"
-  return "unstable"
-}
+import type { HealthStatus } from "../health.ts"
+import type { ConfidenceLevel } from "../api/stability.ts"
+import { determineHealth } from "../health.ts"
 
 /** Format health status with emoji */
 export function formatHealthStatus(status: HealthStatus): string {
