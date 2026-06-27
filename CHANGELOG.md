@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.19] - 2026-06-27
+
+### Added
+- `src/auth/login.ts` — `hasApiKey()` function to check for configured credentials (was inline in `index.ts`)
+- `src/formatters/status.ts` — new module with pure `formatProviderStatus()` for the `/openmodel` command display
+- `formatStabilityDetail()` and `formatStabilitySummaryLine()` in `src/formatters/stability.ts` — extract stability formatting from `index.ts`
+- `CommandContext` interface in `index.ts` — types the command handler context instead of using `any`
+
+### Changed
+- `index.ts` — refactored to pure orchestration: `/openmodel` and `/openmodel-stability` handlers delegate I/O, formatting, and display logic to extracted functions
+- `.agents/skills/pi-openmodel-info/SKILL.md` — completed thinking levels section with full mappings (`minimal` through `xhigh`) for both protocols
+
+### Removed
+- `import { readFile } from "node:fs/promises"` and `import { homedir } from "node:os"` from `index.ts` (moved into `hasApiKey()`)
+
 ## [0.2.18] - 2026-06-26
 
 ### Added
