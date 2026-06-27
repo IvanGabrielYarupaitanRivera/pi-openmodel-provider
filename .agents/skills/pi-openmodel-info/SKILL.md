@@ -32,9 +32,31 @@ Models are cached locally at `~/.pi/agent/cache/openmodel-models.json` with a **
 
 ## Thinking levels
 
-Reasoning models support thinking levels:
-- **Messages protocol:** minimal → low, low → medium, medium → high
-- **Responses protocol:** `reasoning_effort` levels (low, medium, high)
+Reasoning models support thinking levels mapped per protocol:
+
+**Messages protocol (`anthropic-messages`):**
+
+| Level | Mapped value |
+|---|---|
+| `off` | `null` |
+| `minimal` | `low` |
+| `low` | `medium` |
+| `medium` | `high` |
+| `high` | `high` |
+| `xhigh` | `max` |
+
+**Responses protocol (`openai-responses`):** uses `reasoning_effort`
+
+| Level | Mapped value |
+|---|---|
+| `off` | `null` |
+| `minimal` | `low` |
+| `low` | `low` |
+| `medium` | `medium` |
+| `high` | `high` |
+| `xhigh` | `high` |
+
+**Gemini protocol (`google-generative-ai`):** no thinking level mapping (returns empty).
 
 ## Compat flags
 

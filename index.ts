@@ -6,15 +6,25 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { fetchOpenModelModels } from "./src/api/models.ts"
-import { login, refreshToken, getApiKey } from "./src/auth/login.ts"
+import { login, refreshToken, getApiKey, hasApiKey } from "./src/auth/login.ts"
 import {
   fetchModelStabilitySummary,
   fetchModelStabilityDetail,
 } from "./src/api/stability.ts"
-import { formatHealthStatus } from "./src/formatters/stability.ts"
+import {
+  formatStabilityDetail,
+  formatStabilitySummaryLine,
+} from "./src/formatters/stability.ts"
+import { formatProviderStatus } from "./src/formatters/status.ts"
 import { readModelCache, writeModelCache } from "./src/cache.ts"
-import { readFile } from "node:fs/promises"
-import { homedir } from "node:os"
+
+/** Minimal command context type for pi extension command handlers. */
+interface CommandContext {
+  signal?: AbortSignal
+  ui: {
+    notify(message: string, type: string): void
+  }
+}
 
 export default async function (pi: ExtensionAPI) {
   let models: Awaited<ReturnType<typeof fetchOpenModelModels>> = []
@@ -75,70 +85,31 @@ export default async function (pi: ExtensionAPI) {
   // /openmodel - Show provider status
   pi.registerCommand("openmodel", {
     description: "Show OpenModel provider status",
-    handler: async (_args: string, ctx: any) => {
-      const count = models.length
-
-      // Detect if user has configured an API key in auth.json
-      let hasApiKey = false
-      try {
-        const authPath = `${homedir()}/.pi/agent/auth.json`
-        const content = await readFile(authPath, "utf-8")
-        const data = JSON.parse(content)
-        hasApiKey = !!(data.openmodel?.access || data.openmodel?.refresh)
-      } catch {
-        // Auth file not found
-      }
-
-      const lines = [
-        "╔══════════════════════════════════╗",
-        "║        OpenModel.ai              ║",
-        "╠══════════════════════════════════╣",
-        `║  Models: ${String(count).padStart(3)} loaded${fromCache ? " (cached)" : ""}         ║`,
-        hasApiKey ? "║  API Key: ✅ Configured              ║" : "║  API Key: ❌ Not configured          ║",
-        "╠══════════════════════════════════╣",
-        "║  Commands:                       ║",
-        "║  /model openmodel/...            ║",
-        "║  /openmodel-stability            ║",
-        "╚══════════════════════════════════╝",
-      ]
-
-      const hints: string[] = []
-      if (!hasApiKey) {
-        hints.push("ℹ️  Run /login → OpenModel → paste your API key")
-      }
-      if (count === 0 && hasApiKey) {
-        hints.push("ℹ️  Run /reload after setting your API key")
-      }
-      if (count === 0 && modelError) {
-        hints.push(`ℹ️  ${modelError}`)
-      }
-      hints.push("ℹ️  Press Ctrl+L to select a model")
-
-      ctx.ui.notify([...lines, ...hints].join("\n"), "info")
+    handler: async (_args: string, ctx: CommandContext) => {
+      ctx.ui.notify(
+        formatProviderStatus({
+          count: models.length,
+          fromCache,
+          hasApiKey: await hasApiKey(),
+          modelError,
+        }),
+        "info",
+      )
     },
   })
 
   // /openmodel-stability - Show model health metrics
   pi.registerCommand("openmodel-stability", {
     description: "Show model stability metrics (24h)",
-    handler: async (args: string | undefined, ctx: any) => {
+    handler: async (args: string | undefined, ctx: CommandContext) => {
       try {
+        const fetchOptions = ctx.signal ? { signal: ctx.signal } : {}
         if (args?.trim()) {
           const name = args.trim()
-          const detail = await fetchModelStabilityDetail(name, { signal: ctx.signal })
-          const lines = [
-            `📊 ${detail.model_name}`,
-            `━━━━━━━━━━━━━━━━━━━━━━`,
-            `Health:     ${formatHealthStatus(detail.health_status)}`,
-            `Success:    ${detail.summary.success_rate.toFixed(2)}%`,
-            `Latency:    ${detail.summary.avg_latency_ms.toFixed(0)}ms`,
-            `TTFT:       ${detail.summary.avg_ttft_ms.toFixed(0)}ms`,
-            `Throughput: ${detail.summary.avg_tps.toFixed(1)} t/s`,
-            `Confidence: ${detail.confidence}`,
-          ]
-          ctx.ui.notify(lines.join("\n"), "info")
+          const detail = await fetchModelStabilityDetail(name, fetchOptions)
+          ctx.ui.notify(formatStabilityDetail(detail), "info")
         } else {
-          const summary = await fetchModelStabilitySummary({ signal: ctx.signal })
+          const summary = await fetchModelStabilitySummary(fetchOptions)
           if (summary.length === 0) {
             ctx.ui.notify("📊 No stability data available for any model yet.", "warning")
             return
@@ -149,8 +120,7 @@ export default async function (pi: ExtensionAPI) {
             return (order[a.health_status] ?? 5) - (order[b.health_status] ?? 5)
           })
           for (const s of sorted) {
-            const emoji = formatHealthStatus(s.health_status).split(" ")[0]
-            lines.push(`${emoji} ${s.model_name.padEnd(28)} ${s.success_rate.toFixed(1).padStart(5)}%  ${s.avg_latency_ms.toFixed(0).padStart(5)}ms  ${s.avg_tps.toFixed(1).padStart(6)} t/s`)
+            lines.push(formatStabilitySummaryLine(s))
           }
           ctx.ui.notify(lines.join("\n"), "info")
         }

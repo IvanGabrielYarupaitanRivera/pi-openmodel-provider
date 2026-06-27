@@ -10,6 +10,9 @@
  * Since OpenModel API keys don't expire, "refresh" is a no-op.
  */
 
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
+import { homedir } from "node:os"
 import { sanitizeApiKey, isValidApiKey } from "./validate.ts"
 
 export interface OAuthLoginCallbacks {
@@ -129,4 +132,18 @@ export async function refreshToken(
  */
 export function getApiKey(credentials: OAuthCredentials): string {
   return credentials.access
+}
+
+/**
+ * Check if the user has configured an OpenModel API key in pi's auth file.
+ */
+export async function hasApiKey(): Promise<boolean> {
+  const authPath = join(homedir(), ".pi", "agent", "auth.json")
+  try {
+    const content = await readFile(authPath, "utf-8")
+    const data = JSON.parse(content)
+    return !!(data.openmodel?.access || data.openmodel?.refresh)
+  } catch {
+    return false
+  }
 }
