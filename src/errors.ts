@@ -7,39 +7,49 @@
  * Proxy endpoints return errors in provider-specific formats (Anthropic, OpenAI, Gemini).
  */
 
+/** Check if a value is a non-null object (Record) */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
 /** Parse an OpenModel Web API error response body */
 export function parseWebError(body: unknown): { code: string; message: string; detail?: string } {
-  const err = (body as any)?.error
-  if (err?.code && err?.msg) {
-    const result: { code: string; message: string; detail?: string } = {
-      code: String(err.code),
-      message: String(err.msg),
+  if (isRecord(body) && isRecord(body.error)) {
+    const err = body.error
+    if (typeof err.code === "string" && typeof err.msg === "string") {
+      const result: { code: string; message: string; detail?: string } = {
+        code: err.code,
+        message: err.msg,
+      }
+      if (typeof err.detail === "string") {
+        result.detail = err.detail
+      }
+      return result
     }
-    if (err.detail) {
-      result.detail = String(err.detail)
-    }
-    return result
   }
   return { code: "UNKNOWN", message: "An unknown error occurred" }
 }
 
 /** Parse an OpenModel proxy API error body (any format) */
 export function parseProxyError(body: unknown): { code: string; message: string } {
-  const b = body as any
+  if (isRecord(body) && isRecord(body.error)) {
+    const err = body.error
 
-  // Anthropic format: { type: "error", error: { type, message } }
-  if (b?.type === "error" && b?.error?.message) {
-    return { code: b.error.type ?? "UNKNOWN", message: b.error.message }
-  }
+    // Anthropic format: { type: "error", error: { type, message } }
+    if (body.type === "error" && typeof err.message === "string") {
+      return { code: typeof err.type === "string" ? err.type : "UNKNOWN", message: err.message }
+    }
 
-  // OpenAI format: { error: { message, type, code } }
-  if (b?.error?.message) {
-    return { code: b.error.code ?? b.error.type ?? "UNKNOWN", message: b.error.message }
-  }
+    // OpenAI format: { error: { message, type, code } }
+    if (typeof err.message === "string") {
+      const code = typeof err.code === "string" ? err.code : typeof err.type === "string" ? err.type : "UNKNOWN"
+      return { code, message: err.message }
+    }
 
-  // Gemini format: { error: { code, message, status } }
-  if (b?.error?.status) {
-    return { code: b.error.status, message: b.error.message }
+    // Gemini format: { error: { code, message, status } }
+    if (typeof err.status === "string") {
+      return { code: err.status, message: typeof err.message === "string" ? err.message : "Unknown error" }
+    }
   }
 
   return { code: "UNKNOWN", message: "An unknown error occurred" }

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.20] - 2026-06-28
+
+### Changed
+- `src/errors.ts` — replaced all `as any` casts with proper `isRecord()` type guard for type-safe body parsing
+
+### Fixed
+- Added missing `isRecord()` utility type guard to eliminate `any` usage in error parsing (adheres to project type safety policy)
+
 ## [0.2.19] - 2026-06-27
 
 ### Added
